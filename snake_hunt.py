@@ -7,7 +7,7 @@ from tkinter import ttk
 root = Tk()
 
 BEYOND_BOARD = (2000, 2000)
-BOARD = (1000,1000)
+BOARD = (5000,5000)
 CELL = 10
 SPEED = CELL
 

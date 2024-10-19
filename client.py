@@ -1,6 +1,8 @@
 import os
 import socket
 import pickle
+from http.client import responses
+
 import pygame
 import pygame.font
 from pygame.locals import *
@@ -9,6 +11,11 @@ from threading import Thread
 from tkinter import *
 from tkinter import ttk
 import sys
+
+# Weather API imports
+import datetime as dt
+import datetime
+import requests
 
 from gamedata import *
 import comm
@@ -117,7 +124,8 @@ class PauseMenu:
     def __init__(self, game):
         """Create the menu"""
         #self.root = Tk()
-        root.geometry('275x125')
+        #root.geometry('275x125')
+        root.geometry('750x750')
         self.game = game
         self.current_name = StringVar()
         self.populate()
@@ -553,7 +561,37 @@ class MusicPlayer():
         elif sound == comm.Message.SELF_COLLISION or sound == comm.Message.OTHER_COLLISION:
             self.self_collision.play()
 
+# functions added by Shafiq for the LAB assignment.
+
+def kelvin_to_celsius_fahrenheit(kelvin):
+    celsius = kelvin - 273.15
+    fahrenheit = celsius * (9/5) + 32
+    return celsius, fahrenheit
+
+
 def main():
+    API_KEY = open('OpenWeather_API_key.py','r').read()
+    #API_KEY = "ea7462c3a327d8e268193e6ac9137887"
+    BASE_URL = f"https://api.openweathermap.org/data/2.5/weather?"
+    CITY = "Philadelphia"
+    url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
+    response = requests.get(url).json()
+    temp_kelvin = requests.get(url).json()
+    temp_kelvin = response['main']['temp']
+    temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(temp_kelvin)
+    feels_like_kelvin = response['main']['feels_like']
+    feels_like_celsius, feels_like_fahrenheit = kelvin_to_celsius_fahrenheit(feels_like_kelvin)
+    humidity = response['main']['humidity']
+    description = response['weather'][0]['description']
+    wind_speed = response['wind']['speed']
+    # sunrise_time = dt.datetime.utcfromtimestamp(response['sys']['sunrise'] + response['timezone'])
+    sunrise_time = datetime.fromtimestamp(response['sys']['sunrise'], datetime.timezone.utc)
+    sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
+    sunrise_time = datetime.fromtimestamp(response['sys']['sunrise'], datetime.timezone.utc)
+
+print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
+
+    print("This is a test to access the weather by Shafiq Rahman")
     client = Client()
     client.input_addr()
     if not client.connect():

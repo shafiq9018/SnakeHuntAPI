@@ -8,7 +8,7 @@ from socket import SHUT_RDWR
 
 BOARD = (1000,1000)
 CELL = 10
-SPEED = 10
+SPEED = 5
 
 # COLS = BOARD[0]/CELL
 # ROWS = BOARD[1]/CELL
@@ -155,7 +155,8 @@ class Snake():
     get_visible_bodyparts(camera, camera_target)
     """
 
-    MAX_INVINCIBLE_LENGTH = 3
+    # originally this was set to 3
+    MAX_INVINCIBLE_LENGTH = 300
     INITIAL_LENGTH = 1
     def __init__(self, position, length, xdir, ydir, bounds):
         """Create snake."""
