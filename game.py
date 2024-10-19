@@ -156,7 +156,7 @@ class Snake():
     """
 
     # originally this was set to 3
-    MAX_INVINCIBLE_LENGTH = 300
+    MAX_INVINCIBLE_LENGTH = 3
     INITIAL_LENGTH = 1
     def __init__(self, position, length, xdir, ydir, bounds):
         """Create snake."""

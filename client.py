@@ -14,7 +14,7 @@ import sys
 
 # Weather API imports
 import datetime as dt
-import datetime
+# import datetime
 import requests
 
 from gamedata import *
@@ -585,13 +585,17 @@ def main():
     description = response['weather'][0]['description']
     wind_speed = response['wind']['speed']
     # sunrise_time = dt.datetime.utcfromtimestamp(response['sys']['sunrise'] + response['timezone'])
-    sunrise_time = datetime.fromtimestamp(response['sys']['sunrise'], datetime.timezone.utc)
-    sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
-    sunrise_time = datetime.fromtimestamp(response['sys']['sunrise'], datetime.timezone.utc)
-
-print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
+    sunrise_time = dt.datetime.fromtimestamp(response['sys']['sunrise'], dt.timezone.utc)
+    # sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
+    sunset_time = dt.datetime.fromtimestamp(response['sys']['sunset'], dt.timezone.utc)
 
     print("This is a test to access the weather by Shafiq Rahman")
+    print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
+    print(f"Temperature in {CITY}: {temp_celsius} °C")
+    print(f"Wind speed in {CITY}: {wind_speed} mph.")
+    print(f"humidity in {CITY}: {humidity} .")
+    print(f"description in {CITY}: {description} .")
+
     client = Client()
     client.input_addr()
     if not client.connect():
