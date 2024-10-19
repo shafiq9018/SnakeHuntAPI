@@ -16,6 +16,7 @@ SPEED = 10
 COLS = int (BOARD[0]/CELL)
 ROWS = int (BOARD[1]/CELL)
 
+
 MAX_NAME_LENGTH = 32
 
 class Player():
