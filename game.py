@@ -9,8 +9,13 @@ from socket import SHUT_RDWR
 BOARD = (1000,1000)
 CELL = 10
 SPEED = 10
-COLS = BOARD[0]/CELL
-ROWS = BOARD[1]/CELL
+
+# COLS = BOARD[0]/CELL
+# ROWS = BOARD[1]/CELL
+
+COLS = int (BOARD[0]/CELL)
+ROWS = int (BOARD[1]/CELL)
+
 MAX_NAME_LENGTH = 32
 
 class Player():

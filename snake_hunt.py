@@ -10,8 +10,12 @@ BEYOND_BOARD = (2000, 2000)
 BOARD = (1000,1000)
 CELL = 10
 SPEED = CELL
-COLS = BOARD[0]/CELL
-ROWS = BOARD[1]/CELL
+
+#COLS = BOARD[0]/CELL
+#ROWS = BOARD[1]/CELL
+COLS = int(BOARD[0]/CELL)
+ROWS = int(BOARD[1]/CELL)
+
 
 class Player():
     def __init__(self, name, snake):
