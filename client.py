@@ -570,6 +570,9 @@ def kelvin_to_celsius_fahrenheit(kelvin):
 
 
 def main():
+
+    print("This is a test to access the weather by Shafiq Rahman")
+
     API_KEY = open('OpenWeather_API_key.py','r').read()
     #API_KEY = "ea7462c3a327d8e268193e6ac9137887"
     BASE_URL = f"https://api.openweathermap.org/data/2.5/weather?"
@@ -589,7 +592,6 @@ def main():
     # sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
     sunset_time = dt.datetime.fromtimestamp(response['sys']['sunset'], dt.timezone.utc)
 
-    print("This is a test to access the weather by Shafiq Rahman")
     print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
     print(f"Temperature in {CITY}: {temp_celsius} °C")
     print(f"Wind speed in {CITY}: {wind_speed} mph.")
