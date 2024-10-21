@@ -8,8 +8,8 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (snakehunt)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.13 interpreter library" level="application" />
+    <orderEntry type="library" exported="" name="Python 3.12 (snakehunt) interpreter library" level="application" />
   </component>
 </module>
