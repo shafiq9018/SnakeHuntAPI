@@ -1,7 +1,10 @@
+import json
 import os
 import socket
 import pickle
+from email._header_value_parser import get_token
 from http.client import responses
+from urllib import response
 
 import pygame
 import pygame.font
@@ -18,9 +21,12 @@ import datetime as dt
 import requests
 
 from gamedata import *
+
 import comm
 
 root = Tk()
+
+
 
 def resource_path(relative_path):
     """
@@ -568,7 +574,6 @@ def kelvin_to_celsius_fahrenheit(kelvin):
     fahrenheit = celsius * (9/5) + 32
     return celsius, fahrenheit
 
-
 def main():
 
     print("This is a test to access the weather by Shafiq Rahman")
@@ -597,6 +602,8 @@ def main():
     print(f"Wind speed in {CITY}: {wind_speed} mph.")
     print(f"humidity in {CITY}: {humidity} .")
     print(f"description in {CITY}: {description} .")
+
+
 
     client = Client()
     client.input_addr()
