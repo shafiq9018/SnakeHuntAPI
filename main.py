@@ -47,7 +47,7 @@ def search_for_artist(token, artist_name):
         return None
     return json_result[0]
 
-def get_songs_by_artist(token, artist_id)
+def get_songs_by_artist(token, artist_id):
     url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
 
 token = get_token()
