@@ -1,10 +1,6 @@
-import json
 import os
 import socket
 import pickle
-from email._header_value_parser import get_token
-from http.client import responses
-from urllib import response
 
 import pygame
 import pygame.font
@@ -20,9 +16,15 @@ import datetime as dt
 # import datetime
 import requests
 
+from game import gameWindowSize
 from gamedata import *
-
 import comm
+
+# loads all the variables in the .env file
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 
 root = Tk()
 
@@ -230,8 +232,8 @@ class Game():
 
     Attributes
     ----------
-    camera (tuple[int, int]):
-        The width and height of the player's camera
+    gameWindowSize (tuple[int, int]):
+        The width and height of the player's gameWindowSize
 
     board (tuple[int, int]):
         The width and height of the playing field
@@ -262,18 +264,22 @@ class Game():
     def __init__(self, client, radio):
         """Initialize the game"""
         pygame.init()
-        self.camera = (500, 500)
-        self.board = (1000, 1000)
+        # I added this environment variable to be pulled from on location instead of hardcoding magic numbers -Shafiq.
+        # I renamed camera to gameWindowSize for ease of readability -Shafiq.
+        # Original code : self.camera = gameWindowSize(1000, 1000) -Shafiq.
+        # self.gameWindowSize = (os.getenv('GAME_WINDOW_WIDTH'),os.getenv('GAME_WINDOW_HEIGHT'))
+        self.gameWindowSize = (2000, 2000)
+        self.gameMapSize = (os.getenv('GAME_MAP_WIDTH'),os.getenv('GAME_MAP_HEIGHT'))
         self.client = client
         self.running = True
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
-
+        print(self.gameWindowSize[1])
     def start(self):
         """Create the game window."""
         pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])
         flags = DOUBLEBUF
-        self.window = pygame.display.set_mode(self.camera, flags, 16)
+        self.window = pygame.display.set_mode(self.gameWindowSize, flags, 16)
 
     def show_leaderboard(self, leaderboard):
         """
@@ -301,7 +307,7 @@ class Game():
         """
         Show unreachable area in a different color.
 
-        This only occurs if the unreachable area is viewable in the player's camera.
+        This only occurs if the unreachable area is viewable in the player's gameWindowSize.
         The head is used as a basis to determine the thickness of the rendered unreachable area.
         The closer the head is to the area, the thicker the rendered area will be.
 
@@ -314,21 +320,21 @@ class Game():
         ------
         None
         """
-        if head.position[0] + self.camera[0]/2 > self.board[0]:
-            off_map_width = (head.position[0] + self.camera[0]/2 - self.board[0])
-            off_map_rect = (self.camera[0] - off_map_width, 0, off_map_width, self.camera[1])
+        if head.position[0] + self.gameWindowSize[0]/2 > self.board[0]:
+            off_map_width = (head.position[0] + self.gameWindowSize[0] / 2 - self.board[0])
+            off_map_rect = (self.gameWindowSize[0] - off_map_width, 0, off_map_width, self.gameWindowSize[1])
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        elif head.position[0] - self.camera[0]/2 < 0:
-            off_map_width = -(head.position[0] - self.camera[0]/2)
-            off_map_rect = (0, 0, off_map_width, self.camera[1])
+        elif head.position[0] - self.gameWindowSize[0]/2 < 0:
+            off_map_width = -(head.position[0] - self.gameWindowSize[0] / 2)
+            off_map_rect = (0, 0, off_map_width, self.gameWindowSize[1])
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        if head.position[1] + self.camera[1]/2 > self.board[1]:
-            off_map_width = (head.position[1] + self.camera[1]/2 - self.board[1])
-            off_map_rect = (0, self.camera[0] - off_map_width, self.camera[0], off_map_width)
+        if head.position[1] + self.gameWindowSize[1]/2 > self.board[1]:
+            off_map_width = (head.position[1] + self.gameWindowSize[1] / 2 - self.board[1])
+            off_map_rect = (0, self.gameWindowSize[0] - off_map_width, self.gameWindowSize[0], off_map_width)
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        elif head.position[1] - self.camera[1]/2 < 0:
-            off_map_width = -(head.position[1] - self.camera[1]/2)
-            off_map_rect = (0, 0, self.camera[0], off_map_width)
+        elif head.position[1] - self.gameWindowSize[1]/2 < 0:
+            off_map_width = -(head.position[1] - self.gameWindowSize[1] / 2)
+            off_map_rect = (0, 0, self.gameWindowSize[0], off_map_width)
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
 
     def draw_eyes(self, head, rect):
@@ -376,7 +382,7 @@ class Game():
 
     def render(self, game_data):
         """
-        Render all objects viewable in the player's camera.
+        Render all objects viewable in the player's gameWindowSize.
 
         Parameters
         ----------
@@ -401,7 +407,7 @@ class Game():
 
         self.render_bounds(my_head)
     
-        head_rect = (self.camera[0] / 2, self.camera[1] / 2, my_head.width - 2, my_head.width - 2)
+        head_rect = (self.gameWindowSize[0] / 2, self.gameWindowSize[1] / 2, my_head.width - 2, my_head.width - 2)
 
         for pellet in pellets:
             pygame.draw.rect(self.window, pellet.color, make_rect(head_rect, my_head.position, pellet.position, pellet.width))

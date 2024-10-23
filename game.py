@@ -1,3 +1,8 @@
+from email._header_value_parser import get_token
+from http.client import responses
+from urllib import response
+import json
+
 import pickle
 import comm
 from random import randint
@@ -6,15 +11,24 @@ from pygame.time import Clock
 from gamedata import *
 from socket import SHUT_RDWR
 
-BOARD = (1000,1000)
+# loads all the variables in the .env file
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+# BOARD = (2000, 2000)
+
+welcomeBoard = (os.getenv('WELCOME_WINDOW_WIDTH'),os.getenv('WELCOME_WINDOW_HEIGHT'))
+
+
 CELL = 10
 SPEED = 5
 
-# COLS = BOARD[0]/CELL
-# ROWS = BOARD[1]/CELL
+# COLS = welcomeBoard[0]/CELL
+# ROWS = welcomeBoard[1]/CELL
 
-COLS = int (BOARD[0]/CELL)
-ROWS = int (BOARD[1]/CELL)
+COLS = int (int(welcomeBoard[0]) / CELL)
+ROWS = int (int(welcomeBoard[1]) / CELL)
 
 
 MAX_NAME_LENGTH = 32
@@ -152,7 +166,7 @@ class Snake():
     collides_other(other_snakes)
     collides_position(position)
     cook()
-    get_visible_bodyparts(camera, camera_target)
+    get_visible_bodyparts(gameWindowSize, camera_target)
     """
 
     # originally this was set to 3
@@ -390,19 +404,19 @@ class Snake():
 
     def get_visible_bodyparts(self, camera, camera_target):
         """
-        Get the body parts of this snake that are visible by a given camera.
+        Get the body parts of this snake that are visible by a given gameWindowSize.
 
         Parameters
         ----------
-        camera (Camera):
-            The camera for which to check visibility of snake
+        gameWindowSize (gameWindowSize):
+            The gameWindowSize for which to check visibility of snake
 
         camera_target (tuple[int, int]):
-            Position of the camera's target
+            Position of the gameWindowSize's target
 
         Return
         ------
-        A list of body parts of this snake that are within the camera's lens
+        A list of body parts of this snake that are within the gameWindowSize's lens
         """
         body_parts = []
         for body_part in self.body:
@@ -636,16 +650,16 @@ class RandomPellets():
         """
         self.pellets = self.pellets + pellets
 
-class Camera():
+class gameWindowSize():
     """
-    A class representing a camera.
+    A class representing a gameWindowSize.
 
-    This camera keeps its target in the middle.
+    This gameWindowSize keeps its target in the middle.
 
     Attributes
     ----------
     dimensions (tuple[int, int]):
-        Width and height of camera
+        Width and height of gameWindowSize
     
     Methods
     -------
@@ -653,12 +667,12 @@ class Camera():
     """
 
     def __init__(self, width, height):
-        """Create a camera object."""
+        """Create a gameWindowSize object."""
         self.dimensions = (width, height)
 
     def within_bounds(self, object_pos, target_pos):
         """
-        Check if an object is within the camera's sight
+        Check if an object is within the gameWindowSize's sight
 
         Parameters
         ----------
@@ -666,11 +680,11 @@ class Camera():
             Position of object
 
         target_pos (tuple[int, int]):
-            Position of camera's target
+            Position of gameWindowSize's target
 
         Return
         ------
-        True if object_pos is within camera's sight, False otherwise
+        True if object_pos is within gameWindowSize's sight, False otherwise
         """
         camera_left_edge = target_pos[0] - self.dimensions[0] / 2
         camera_right_edge = target_pos[0] + self.dimensions[0] / 2
@@ -699,8 +713,8 @@ class Game():
     players (list):
         List of current players
 
-    camera (Camera):
-        Camera object
+    gameWindowSize (gameWindowSize):
+        gameWindowSize object
 
     random_pellets (RandomPellets):
         Generates the game's pellets
@@ -726,14 +740,19 @@ class Game():
         """Initialize game."""
         self.server = server or None
         self.players = []
-        self.camera = Camera(500, 500)
+        # Requires import os
+        # I added this environment variable to be pulled from on location instead of hardcoding magic numbers -Shafiq.
+        # I renamed camera to gameWindowSize for ease of readability -Shafiq.
+        # Original code : self.camera = gameWindowSize(1000, 1000) -Shafiq.
+        # self.camera = gameWindowSize(1000, 1000)
+        self.gameWindowSize = (os.getenv('GAME_WINDOW_WIDTH'),os.getenv('GAME_WINDOW_HEIGHT'))
         self.random_pellets = RandomPellets(25)
         self.running = True
         self.bounds = {
             'left': 0,
-            'right': BOARD[0],
+            'right': welcomeBoard[0],
             'up': 0,
-            'down': BOARD[1]
+            'down': welcomeBoard[1]
         }
 
     def add_player(self, player):
@@ -786,7 +805,7 @@ class Game():
 
     def get_visible_snakes(self, receiver_player, camera_target):
         """
-        Get the parts of the snakes that are visible in camera.
+        Get the parts of the snakes that are visible in gameWindowSize.
 
         Parameters
         ----------
@@ -794,7 +813,7 @@ class Game():
             The receiver of the return value of this function
 
         camera_target (tuple[int, int]):
-            Position of the camera's target, basis for what is and isn't visible
+            Position of the gameWindowSize's target, basis for what is and isn't visible
 
         Return
         ------
@@ -808,12 +827,12 @@ class Game():
 
     def get_visible_pellets(self, camera_target):
         """
-        Get the pellets that are visible in camera.
+        Get the pellets that are visible in gameWindowSize.
 
         Parameters
         ----------
         camera_target (tuple[int, int]):
-            Position of the camera's target, basis for what is and isn't visible
+            Position of the gameWindowSize's target, basis for what is and isn't visible
 
         Return
         ------

@@ -11,8 +11,8 @@ BOARD = (5000,5000)
 CELL = 10
 SPEED = CELL
 
-# COLS = BOARD[0]/CELL
-# ROWS = BOARD[1]/CELL
+# COLS = wealcomBoard[0]/CELL
+# ROWS = wealcomBoard[1]/CELL
 
 COLS = int(BOARD[0]/CELL)
 ROWS = int(BOARD[1]/CELL)
