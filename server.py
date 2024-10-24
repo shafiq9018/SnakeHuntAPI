@@ -9,24 +9,18 @@ from game import *
 class Server():
     """
     Game server
-
     Attributes
     ----------
     game (Game):
         Instance of the running game
-
     host (str):
         Hostname of the machine
-
     port (int):
         Port number
-
     s (socket.socket):
         A TCP server socket
-
     next_id (int):
         Unique ID to assign to next player
-    
     Methods
     -------
     start()
@@ -49,7 +43,6 @@ class Server():
     def start(self):
         """
         Start listening for connections and start game loop
-
         Return
         ------
         None
@@ -67,7 +60,6 @@ class Server():
     def listen(self):
         """
         Listen for connections, create a thread for each connected client.
-
         Return
         ------
         None
@@ -88,12 +80,10 @@ class Server():
     def receive_name(self, player):
         """
         Receive name input from a player
-
         Parameters
         ----------
         player (Player):
             The player to listen to
-
         Return
         ------
         True if the name was accepted, False if the player quits.
@@ -107,7 +97,6 @@ class Server():
                 return False
 
             name_accepted = False
-
             response = None
             if len(input) > MAX_NAME_LENGTH:
                 response = pickle.dumps(comm.Message.NAME_TOO_LONG)
@@ -120,14 +109,11 @@ class Server():
                 response = pickle.dumps(comm.Message.NAME_OK)
                 player.name = input
                 name_accepted = True
-
             size_as_bytes = comm.size_as_bytes(response)
             comm.send_data(player.socket, size_as_bytes)
             comm.send_data(player.socket, response)
-
             if name_accepted:
                 return True
-
             if len(input) > MAX_NAME_LENGTH:
                 max_length = pickle.dumps(MAX_NAME_LENGTH)
                 size_as_bytes = comm.size_as_bytes(max_length)
@@ -137,14 +123,11 @@ class Server():
     def receive_input(self, player):
         """
         Receive directional input or quit signal from player.
-
         Use input to change direction.
-
         Parameters
         ----------
         player (Player):
             The player to receive input from
-
         Return
         ------
         None

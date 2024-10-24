@@ -77,21 +77,16 @@ class Player():
 class BodyPart():
     """
     A part of a snake.
-
     Attributes
     ----------
     position (tuple[int, int]):
         x and y positions, respectively
-
     xdir (int):
         Horizontal direction (-1 left, 0 still, 1 right)
-
     ydir (int):
         Vertical direction (-1 up, 0 still, 1 down)
-
     color (tuple[int, int, int]):
         Values for red, green, and blue (RGB), respectively
-
     Methods
     -------
     set_direction(xdir, ydir)
