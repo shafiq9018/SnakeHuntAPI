@@ -109,6 +109,7 @@ class Snake():
     # Change direction of head of snake based on input
     def change_direction(self):
         keys = pygame.key.get_pressed()
+
         if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.head.xdir != 1:
             self.head.xdir = -1
             self.head.ydir = 0
