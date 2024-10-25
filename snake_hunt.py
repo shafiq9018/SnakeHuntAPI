@@ -7,18 +7,28 @@ from tkinter import ttk
 root = Tk()
 
 BEYOND_BOARD = (2000, 2000)
-BOARD = (5000,5000)
+BOARD = (1000,1000)
 CELL = 10
 SPEED = CELL
 
-# COLS = wealcomBoard[0]/CELL
-# ROWS = wealcomBoard[1]/CELL
+# COLS = welcomeBoard[0]/CELL
+# ROWS = welcomeBoard[1]/CELL
 
 COLS = int(BOARD[0]/CELL)
 ROWS = int(BOARD[1]/CELL)
 
+AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
 
-class Player():
+# AI player added by Shafiq Rahman
+class AIPlayer():
+    def __init__(self, name, snake):
+        self.name = name
+        self.snake = snake
+    def setname(self, name):
+        self.name = name
+
+
+class PlayerSnake():
     def __init__(self, name, snake):
         self.name = name
         self.snake = snake
@@ -323,9 +333,14 @@ class Game():
         self.title_rect = self.title_text.get_rect()
 
         self.players = []
+        initial_pos = (25, 25)
+        snakeAI = Snake(initial_pos, 10, 1, 0, self.field_dimensions, self.world_dimensions)
+        self.players.append(PlayerSnake('AI Snake', snakeAI))
+
+        self.players = []
         initial_pos = (250, 250)
-        snake = Snake(initial_pos, 1, 1, 0, self.field_dimensions, self.world_dimensions)
-        self.players.append(Player('Anonymous', snake))
+        snake = Snake(initial_pos, 15, 1, 0, self.field_dimensions, self.world_dimensions)
+        self.players.append(PlayerSnake('Anonymous', snake))
 
         self.camera = Camera(snake, self.camera_dimensions)
         self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
@@ -339,6 +354,8 @@ class Game():
         pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
 
         self.players[0].snake.render(self.world)
+        self.players[1].snake.render(self.world)
+
         self.pellets.render(self.world)
         self.camera.render(self.win, self.world)
         self.show_leaderboard()

@@ -31,7 +31,7 @@ test_title_rect = test_title_text.get_rect()
 test_players = []
 test_initial_pos = (250, 250)
 test_snake = Snake(test_initial_pos, 1, 1, 0, test_field_dimensions, test_world_dimensions)
-test_players.append(Player('Anonymous', test_snake))
+test_players.append(PlayerSnake('Anonymous', test_snake))
 
 test_camera = Camera(test_snake, test_camera_dimensions)
 test_title_rect.center = (test_camera_dimensions[0] // 2, test_camera_dimensions[1] // 2)
