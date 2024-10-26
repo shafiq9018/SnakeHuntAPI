@@ -114,7 +114,8 @@ class Snake():
     def __init__(self, position, length, xdir, ydir, field_dimensions, world_dimensions):
         #(west,north,east,south) points
         self.bounds = {"west":world_dimensions[0]/4, "north":world_dimensions[1]/4, "east":3*world_dimensions[0]/4+field_dimensions[0], "south":3*world_dimensions[1]/4+field_dimensions[1]}
-        self.color = (0, 255, 0)
+        # self.color = (0, 255, 0)
+        self.color = (0, 0, 139)
         self.body = []
         self.turns = {}
         self.position = position
@@ -423,8 +424,13 @@ class Game():
 
     def render(self):
         # Following modified and changed by Shafiq Rahman
-        self.world.fill((20,30,20))
-        pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+
+        # change the background of the game to blue and light blue for beyond.
+        # self.world.fill((20,30,20))
+        # pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+
+        self.world.fill((50,50,50))  # Other colors
+        pygame.draw.rect(self.world, (50, 50, 50), (BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))  # Other colors
 
         self.players[0].snake.render(self.world)
         # self.players[1].snake.render(self.world)
