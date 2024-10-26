@@ -20,7 +20,8 @@ ROWS = int(BOARD[1]/CELL)
 # Vars added by Ryan, Shafiq, or Ethan.
 snakeFoodQuantity = 500
 AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
-
+Camera_Dimensions = BOARD  # Updated so that the screen is the same as the board.
+Camera_Center_Beyond_Board = (int(BEYOND_BOARD[0]/2),int(BEYOND_BOARD[1]/2))
 
 # AI player added by Shafiq Rahman
 import random
@@ -281,6 +282,8 @@ class Pellet():
     def setDetPos(self,xpos,ypos):
         self.position = [xpos,ypos]
 
+
+'''
 class Camera():
     def __init__(self, player, dimensions):
         self.target = player
@@ -289,7 +292,21 @@ class Camera():
 
     def render(self, window, world):
         self.position = self.target.head.position
-        window.blit(world, (5,5), (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0]-10, self.dimensions[1]-10))
+        # window.blit(world, (5,5), (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0]-10, self.dimensions[1]-10))
+        window.blit(world, (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0], self.dimensions[1]))
+'''
+
+class Camera():
+    def __init__(self, player, dimensions):
+        self.dimensions = dimensions
+        # Center the camera over the board
+        self.position = (BEYOND_BOARD[0] // 2, BEYOND_BOARD[1] // 2)
+
+    def render(self, window, world):
+        # Render the board centered in the window
+        # window.blit(world, (5, 5),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
+        window.blit(world, (0, 0),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
+
 
 # Generates multiple pellets in random locations such that they do not
 # overlap
@@ -362,7 +379,7 @@ class Game():
         pygame.init()
         self.field_dimensions = BOARD
         self.world_dimensions = BEYOND_BOARD
-        self.camera_dimensions = (500, 500)
+        self.camera_dimensions = Camera_Dimensions
         self.win = pygame.display.set_mode(self.camera_dimensions)
         self.world = pygame.Surface(self.world_dimensions)
 
