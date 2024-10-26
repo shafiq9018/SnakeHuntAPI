@@ -17,6 +17,8 @@ SPEED = CELL
 COLS = int(BOARD[0]/CELL)
 ROWS = int(BOARD[1]/CELL)
 
+# Vars added by Ryan, Shafiq, or Ethan.
+snakeFoodQuantity = 500
 AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
 
 
@@ -390,7 +392,7 @@ class Game():
         # self.camera = Camera(ai_snake, self.camera_dimensions)
         # self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
 
-        self.pellets = RandomPellets(25, self.world)
+        self.pellets = RandomPellets(snakeFoodQuantity, self.world)
         self.clock = pygame.time.Clock()
         self.running = False
 
@@ -398,7 +400,7 @@ class Game():
         self.camera = Camera(snake, self.camera_dimensions)
         self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
 
-        self.pellets = RandomPellets(25, self.world)
+        self.pellets = RandomPellets(snakeFoodQuantity, self.world)
         self.clock = pygame.time.Clock()
         self.running = False
 
