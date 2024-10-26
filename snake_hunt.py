@@ -332,10 +332,10 @@ class Game():
         self.title_text = self.title_font.render('Snake Hunt', True, (255, 255, 255))
         self.title_rect = self.title_text.get_rect()
 
-        self.players = []
-        initial_pos = (25, 25)
-        snakeAI = Snake(initial_pos, 10, 1, 0, self.field_dimensions, self.world_dimensions)
-        self.players.append(PlayerSnake('AI Snake', snakeAI))
+        #self.players = []
+        #initial_pos = (25, 25)
+        #snakeAI = Snake(initial_pos, 10, 1, 0, self.field_dimensions, self.world_dimensions)
+        #self.players.append(PlayerSnake('AI Snake', snakeAI))
 
         self.players = []
         initial_pos = (250, 250)
@@ -354,7 +354,7 @@ class Game():
         pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
 
         self.players[0].snake.render(self.world)
-        self.players[1].snake.render(self.world)
+        # self.players[1].snake.render(self.world)
 
         self.pellets.render(self.world)
         self.camera.render(self.win, self.world)
