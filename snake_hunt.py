@@ -477,11 +477,11 @@ class Game():
                     pellet = self.pellets.pellets[pos.index([snake.head.position[0], snake.head.position[1]])]
                     self.pellets.resetPellet(pellet)
                     snake.grow(1)
-                # snake.check_body_collision()  <----------please undo remarked before turning in----------------- Testing
+                # snake.check_body_collision()  <----------please undo remarked before turning in Shafiq ----------------- Testing
                 snake.change_direction()
                 snake.move()
             self.render()
-            self.clock.tick(15)
+            self.clock.tick(10)
         pygame.quit()
 
     '''
