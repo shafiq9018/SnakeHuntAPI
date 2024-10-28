@@ -17,42 +17,18 @@ SPEED = CELL
 COLS = int(BOARD[0]/CELL)
 ROWS = int(BOARD[1]/CELL)
 
-# Vars added by Ryan, Shafiq, or Ethan.
-snakeFoodQuantity = 500
 AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
-Camera_Dimensions = BOARD  # Updated so that the screen is the same as the board.
-Camera_Center_Beyond_Board = (int(BEYOND_BOARD[0]/2),int(BEYOND_BOARD[1]/2))
 
 # AI player added by Shafiq Rahman
-import random
-
-class AIPlayer():
-    def __init__(self, name, snake):
-        self.name = name
-        self.snake = snake
-
-    def update_direction(self):
-        # Randomly change direction every few moves
-        if random.choice(['up', 'down', 'left', 'right']) == 'up' and self.snake.head.ydir != 1:
-            self.snake.change_direction_manual(0, -1)  # Up
-        elif random.choice(['up', 'down', 'left', 'right']) == 'down' and self.snake.head.ydir != -1:
-            self.snake.change_direction_manual(0, 1)   # Down
-        elif random.choice(['up', 'down', 'left', 'right']) == 'left' and self.snake.head.xdir != 1:
-            self.snake.change_direction_manual(-1, 0)  # Left
-        elif random.choice(['up', 'down', 'left', 'right']) == 'right' and self.snake.head.xdir != -1:
-            self.snake.change_direction_manual(1, 0)   # Right
-
-'''
-Shafiq test class remarked out.
 class AIPlayer():
     def __init__(self, name, snake):
         self.name = name
         self.snake = snake
     def setname(self, name):
         self.name = name
-'''
 
-class HumanPlayer():
+
+class PlayerSnake():
     def __init__(self, name, snake):
         self.name = name
         self.snake = snake
@@ -114,8 +90,7 @@ class Snake():
     def __init__(self, position, length, xdir, ydir, field_dimensions, world_dimensions):
         #(west,north,east,south) points
         self.bounds = {"west":world_dimensions[0]/4, "north":world_dimensions[1]/4, "east":3*world_dimensions[0]/4+field_dimensions[0], "south":3*world_dimensions[1]/4+field_dimensions[1]}
-        # self.color = (0, 255, 0)
-        self.color = (0, 0, 139)
+        self.color = (0, 255, 0)
         self.body = []
         self.turns = {}
         self.position = position
@@ -161,16 +136,7 @@ class Snake():
             self.head.xdir = 0
             self.head.ydir = 1
             self.turns[self.head.position[:]] = [self.head.xdir, self.head.ydir]
-
-    # Add a method to allow manual direction changes, which the AI will use.
-    # Calling it AI even though it is random snake movements.
-    # Chane direction of AI snake based on random generator
-    # Added by Shafiq Rahman
-    def change_direction_manual(self, xdir, ydir):
-        self.head.xdir = xdir
-        self.head.ydir = ydir
-        self.turns[self.head.position[:]] = [xdir, ydir]
-
+    
     # Move every part of the snake.
     # If a part is at a position where a previous turn occurred, set its direction to the
     # direction of the previous turn.
@@ -239,9 +205,7 @@ class Snake():
             # this part to the top of it with the same direction
             elif xdir == 0 and ydir == -1:
                 self.body.append(BodyPart((previous.position[0],previous.position[1]+(i+1)*width), xdir, ydir, self.color))
-
-    # CIS CHANGE PROPOSAL
-    # Ryan or Ethan, can we modify this method so that the snake doesn't die if it collides itself but dies with other snakes.
+    
     def check_body_collision(self):
         #Snake dies and game is over for user when snake collides with itself
         for part in range(len(self.body)):
@@ -283,8 +247,6 @@ class Pellet():
     def setDetPos(self,xpos,ypos):
         self.position = [xpos,ypos]
 
-
-'''
 class Camera():
     def __init__(self, player, dimensions):
         self.target = player
@@ -293,21 +255,7 @@ class Camera():
 
     def render(self, window, world):
         self.position = self.target.head.position
-        # window.blit(world, (5,5), (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0]-10, self.dimensions[1]-10))
-        window.blit(world, (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0], self.dimensions[1]))
-'''
-
-class Camera():
-    def __init__(self, player, dimensions):
-        self.dimensions = dimensions
-        # Center the camera over the board
-        self.position = (BEYOND_BOARD[0] // 2, BEYOND_BOARD[1] // 2)
-
-    def render(self, window, world):
-        # Render the board centered in the window
-        # window.blit(world, (5, 5),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
-        window.blit(world, (0, 0),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
-
+        window.blit(world, (5,5), (self.position[0] - self.dimensions[0]/2, self.position[1] - self.dimensions[1]/2, self.dimensions[0]-10, self.dimensions[1]-10))
 
 # Generates multiple pellets in random locations such that they do not
 # overlap
@@ -317,6 +265,7 @@ class Camera():
 # elements. Since this implementation is dependent on the board and cell size,
 # this will not work for anything larger than a 23170 by 23170 size board/cell 
 # ratio for 32 bit systems.
+
 class RandomPellets():
     def __init__(self, numPellets, world):
         self.world = world
@@ -370,17 +319,12 @@ class RandomPellets():
         for pellet in self.pellets:
             pellet.render(surface)
 
-
-class Player_snake:
-    pass
-
-
 class Game():
     def __init__(self):
         pygame.init()
         self.field_dimensions = BOARD
         self.world_dimensions = BEYOND_BOARD
-        self.camera_dimensions = Camera_Dimensions
+        self.camera_dimensions = (500, 500)
         self.win = pygame.display.set_mode(self.camera_dimensions)
         self.world = pygame.Surface(self.world_dimensions)
 
@@ -397,40 +341,18 @@ class Game():
         self.players = []
         initial_pos = (250, 250)
         snake = Snake(initial_pos, 1, 1, 0, self.field_dimensions, self.world_dimensions)
-        self.players.append(HumanPlayer('Anonymous', snake))
+        self.players.append(PlayerSnake('Anonymous', snake))
 
-        # by Shafiq Rahman
-        # Add AI multiple player snakes
-        for i in range(len(AISnakes)):
-            ai_snake: AISnakes = Snake((randint(0, COLS) * CELL, randint(0, ROWS) * CELL), 1, 1, 0, self.field_dimensions, self.world_dimensions)
-            self.players.append(AIPlayer(AISnakes[i], ai_snake))
-
-        # Removing camera setup for AI players
-        # Camera & rendering setup
-        # self.camera = Camera(ai_snake, self.camera_dimensions)
-        # self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
-
-        self.pellets = RandomPellets(snakeFoodQuantity, self.world)
-        self.clock = pygame.time.Clock()
-        self.running = False
-
-        # Initialize the camera only for the human player's snake
         self.camera = Camera(snake, self.camera_dimensions)
         self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
 
-        self.pellets = RandomPellets(snakeFoodQuantity, self.world)
+        self.pellets = RandomPellets(1000, self.world)
         self.clock = pygame.time.Clock()
         self.running = False
 
     def render(self):
-        # Following modified and changed by Shafiq Rahman
-
-        # change the background of the game to blue and light blue for beyond.
-        # self.world.fill((20,30,20))
-        # pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
-
-        self.world.fill((50,50,50))  # Other colors
-        pygame.draw.rect(self.world, (50, 50, 50), (BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))  # Other colors
+        self.world.fill((20,30,20))
+        pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
 
         self.players[0].snake.render(self.world)
         # self.players[1].snake.render(self.world)
@@ -438,9 +360,9 @@ class Game():
         self.pellets.render(self.world)
         self.camera.render(self.win, self.world)
         self.show_leaderboard()
-
+    
         pygame.display.flip()
-
+    
     def show_leaderboard(self):
         def takeSnakeSize(element):
             return element.snake.length
@@ -462,29 +384,6 @@ class Game():
         self.pause_menu = PauseMenu(self, self.players[0])
 
     def game_loop(self):
-        self.running = True
-        self.pause()
-        while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-            pos = self.pellets.getPositions()
-            for player in self.players:
-                if isinstance(player, AIPlayer):
-                    player.update_direction()
-                snake = player.snake
-                if [snake.head.position[0], snake.head.position[1]] in pos:
-                    pellet = self.pellets.pellets[pos.index([snake.head.position[0], snake.head.position[1]])]
-                    self.pellets.resetPellet(pellet)
-                    snake.grow(1)
-                # snake.check_body_collision()  <----------please undo remarked before turning in Shafiq ----------------- Testing
-                snake.change_direction()
-                snake.move()
-            self.render()
-            self.clock.tick(10)
-        pygame.quit()
-
-    '''
         self.running = True
 
         self.pause()
@@ -509,7 +408,7 @@ class Game():
             self.clock.tick(15)
             
         pygame.quit()
-    '''
+
 def main():
     game = Game()
     game.game_loop()
