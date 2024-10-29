@@ -19,7 +19,8 @@ ROWS = int(BOARD[1]/CELL)
 
 # Vars added by Ryan, Shafiq, or Ethan.
 snakeFoodQuantity = 500
-AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
+# AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
+AISnakes = ("Abaco Island boa","Boa constrictor")
 Camera_Dimensions = BOARD  # Updated so that the screen is the same as the board.
 Camera_Center_Beyond_Board = (int(BEYOND_BOARD[0]/2),int(BEYOND_BOARD[1]/2))
 
@@ -32,7 +33,7 @@ class AIPlayer():
         self.snake = snake
 
     def update_direction(self):
-        # Randomly change direction every few moves
+        # Randomly changing direction every few moves
         if random.choice(['up', 'down', 'left', 'right']) == 'up' and self.snake.head.ydir != 1:
             self.snake.change_direction_manual(0, -1)  # Up
         elif random.choice(['up', 'down', 'left', 'right']) == 'down' and self.snake.head.ydir != -1:
@@ -423,8 +424,9 @@ class Game():
 
     def render(self):
         # Following modified and changed by Shafiq Rahman
-        self.world.fill((20,30,20))
-        pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+        # Changed the colors to some random green rather than the putrid pink.
+        self.world.fill((0,30,0))
+        pygame.draw.rect(self.world, (0,50,0),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
 
         self.players[0].snake.render(self.world)
         # self.players[1].snake.render(self.world)
