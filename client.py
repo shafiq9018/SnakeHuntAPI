@@ -261,25 +261,47 @@ class Game():
     game_loop()
     """
 
-    def __init__(self, client, radio):
+    def __init__(self, client, radio, weather_condition):
         """Initialize the game"""
         pygame.init()
         # I added this environment variable to be pulled from on location instead of hardcoding magic numbers -Shafiq.
         # I renamed camera to gameWindowSize for ease of readability -Shafiq.
         # Original code : self.camera = gameWindowSize(1000, 1000) -Shafiq.
         # self.gameWindowSize = (os.getenv('GAME_WINDOW_WIDTH'),os.getenv('GAME_WINDOW_HEIGHT'))
-        self.gameWindowSize = (2000, 2000)
-        self.gameMapSize = (os.getenv('GAME_MAP_WIDTH'),os.getenv('GAME_MAP_HEIGHT'))
+        self.weather_condition = weather_condition # Store the weather condition
+        self.camera = (500, 500)
+        self.board = (1000, 1000)
         self.client = client
         self.running = True
+        self.is_foggy = False
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
-        print(self.gameWindowSize[1])
+
+    def adjust_gameplay(self):
+        """
+        Modify gameplay based on weather condition
+        Implemented by Ethan Ung
+        :return:
+        """
+
+        if self.weather_condition == 'Clear':
+            self.speed_multiplier = 1.0
+        elif self.weather_condition == 'Clouds':
+            self.speed_multiplier = 0.9
+        elif self.weather_condition == 'Rain':
+            self.speed_multiplier = 1.2
+        elif self.weather_condition == 'Wind':
+            self.speed_multiplier = 1.2
+        elif self.weather_condition.lower() == 'Fog':
+            self.speed_multiplier = 1.0
+            self.is_foggy = True
+        print(f"Weather: {self.weather_condition}, Speed Multiplier: {self.speed_multiplier}")
+
     def start(self):
         """Create the game window."""
         pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])
         flags = DOUBLEBUF
-        self.window = pygame.display.set_mode(self.gameWindowSize, flags, 16)
+        self.window = pygame.display.set_mode(self.camera, flags, 16)
 
     def show_leaderboard(self, leaderboard):
         """
@@ -320,21 +342,21 @@ class Game():
         ------
         None
         """
-        if head.position[0] + self.gameWindowSize[0]/2 > self.board[0]:
-            off_map_width = (head.position[0] + self.gameWindowSize[0] / 2 - self.board[0])
-            off_map_rect = (self.gameWindowSize[0] - off_map_width, 0, off_map_width, self.gameWindowSize[1])
+        if head.position[0] + self.camera[0]/2 > self.board[0]:
+            off_map_width = (head.position[0] + self.camera[0]/2 - self.board[0])
+            off_map_rect = (self.camera[0] - off_map_width, 0, off_map_width, self.camera[1])
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        elif head.position[0] - self.gameWindowSize[0]/2 < 0:
-            off_map_width = -(head.position[0] - self.gameWindowSize[0] / 2)
-            off_map_rect = (0, 0, off_map_width, self.gameWindowSize[1])
+        elif head.position[0] - self.camera[0]/2 < 0:
+            off_map_width = -(head.position[0] - self.camera[0]/2)
+            off_map_rect = (0, 0, off_map_width, self.camera[1])
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        if head.position[1] + self.gameWindowSize[1]/2 > self.board[1]:
-            off_map_width = (head.position[1] + self.gameWindowSize[1] / 2 - self.board[1])
-            off_map_rect = (0, self.gameWindowSize[0] - off_map_width, self.gameWindowSize[0], off_map_width)
+        if head.position[1] + self.camera[1]/2 > self.board[1]:
+            off_map_width = (head.position[1] + self.camera[1]/2 - self.board[1])
+            off_map_rect = (0, self.camera[0] - off_map_width, self.camera[0], off_map_width)
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
-        elif head.position[1] - self.gameWindowSize[1]/2 < 0:
-            off_map_width = -(head.position[1] - self.gameWindowSize[1] / 2)
-            off_map_rect = (0, 0, self.gameWindowSize[0], off_map_width)
+        elif head.position[1] - self.camera[1]/2 < 0:
+            off_map_width = -(head.position[1] - self.camera[1]/2)
+            off_map_rect = (0, 0, self.camera[0], off_map_width)
             pygame.draw.rect(self.window, (255, 0, 0), off_map_rect)
 
     def draw_eyes(self, head, rect):
@@ -397,7 +419,6 @@ class Game():
             left = headRect[0] + objPos[0] - headPos[0]
             top = headRect[1] + objPos[1] - headPos[1]
             return (left, top, objWidth-2, objWidth-2)
-        
         snake = game_data.snake
         snakes = game_data.snakes
         pellets = game_data.pellets
@@ -406,26 +427,77 @@ class Game():
         my_head = snake[0]
 
         self.render_bounds(my_head)
-    
-        head_rect = (self.gameWindowSize[0] / 2, self.gameWindowSize[1] / 2, my_head.width - 2, my_head.width - 2)
+        head_rect = (self.camera[0] / 2, self.camera[1] / 2, my_head.width - 2, my_head.width - 2)
 
         for pellet in pellets:
             pygame.draw.rect(self.window, pellet.color, make_rect(head_rect, my_head.position, pellet.position, pellet.width))
-            
         for this_snake in snakes:
             for body_part in this_snake:
                 rect = make_rect(head_rect, my_head.position, body_part.position, body_part.width)
                 pygame.draw.rect(self.window, body_part.color, rect)
                 if body_part.direction is not None:
                     self.draw_eyes(body_part, rect)
-            
         pygame.draw.rect(self.window, my_head.color, head_rect)
         self.draw_eyes(my_head, head_rect)
         for body_part in snake[1:]:
             pygame.draw.rect(self.window, body_part.color, make_rect(head_rect, my_head.position, body_part.position, body_part.width))
-            
         self.show_leaderboard(game_data.leaderboard)
+
+        # Apply fog effect
+        # Implemented by Ethan Ung
+        if self.weather_condition == "fog":
+            radius = 255  # Increase this value to expand the fog effect
+            clear_radius = 10
+            self.apply_fog(radius, clear_radius)
+
         pygame.display.flip()
+
+    def apply_fog(self, radius, clear_radius):
+        """
+        Apply a fog around the player to simulate foggy conditions
+        Implemented by Ethan Ung
+
+        :param radius:
+        :param clear_radius:
+        :return:
+        """
+        # Ensures the create_fog_texture function is only called once (if fog_texture does not exist run)
+        # Patched this bug (if statement is gone, game requires too many resources to run coherently)
+        if not hasattr(self, 'fog_texture'):
+            self.fog_texture = self.create_fog_texture(radius, clear_radius)
+
+        # Get the center position of the screen
+        center_position = (self.window.get_width() // 2, self.window.get_height() // 2)
+
+        # Blit the fog texture at the center position
+        fog_rect = self.fog_texture.get_rect(center=center_position)
+        self.window.blit(self.fog_texture, fog_rect.topleft)
+
+    def create_fog_texture(self, radius, clear_radius):
+        """
+        Creates a fog texture for the apply_fog function
+        Implemented by Ethan Ung
+
+        :param radius:
+        :param clear_radius:
+        :return:
+        """
+        fog_texture = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+
+        for y in range(fog_texture.get_height()):
+            for x in range(fog_texture.get_width()):
+                distance = ((x - radius) ** 2 + (y - radius) ** 2) ** 0.5
+
+                if distance < clear_radius:
+                    alpha = 0  # Fully transparent in the center of the camera
+                elif distance < radius:
+                    # Calculate alpha for the fog within the radius
+                    alpha = min(255, int(255 * ((distance - clear_radius) / (radius - clear_radius))))
+                else:
+                    alpha = 255  # Fully opaque at the edges
+
+                fog_texture.set_at((x, y), (255, 255, 255, alpha))  # White fog
+        return fog_texture
 
     def get_direction(self):
         """
@@ -506,7 +578,7 @@ class Game():
                 self.radio.play_sound(game_data.sound)
 
         pygame.quit()
-        
+
 class MusicPlayer():
     """
     A class that allows for audio playback.
@@ -580,36 +652,80 @@ def kelvin_to_celsius_fahrenheit(kelvin):
     fahrenheit = celsius * (9/5) + 32
     return celsius, fahrenheit
 
+def get_description(location):
+    """
+    Fetch weather information for a given location.
+    Implemented by Ethan Ung
+    :param location: The name of the location to fetch weather data for.
+    :return: A dictionary containing weather information.
+    """
+    API_KEY = 'ea7462c3a327d8e268193e6ac9137887'
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    data = response.json()
+
+    if response.status_code == 200:
+        weather = data['weather'][0]['main']
+        temperature = data['main']['temp']
+        wind_speed = data['wind']['speed']
+        humidity = data['main']['humidity']
+
+        return {
+            'weather': weather,
+            'temperature': temperature,
+            'wind_speed': wind_speed,
+            'humidity': humidity
+        }
+    else:
+        return None
+
 def main():
+    """
+    User can input their location and then print description; weather, temperature, wind_speed, humidity
+    Implemented by Ethan Ung
+    :return:
+    """
+    location = input("Enter your location: ")
+    location_description = get_description(location)
+    if location_description:
+        print(f"Weather: {location_description['weather']}")
+        print(f"Temperature: {location_description['temperature']}°C")
+        print(f"Wind Speed: {location_description['wind_speed']} m/s")
+        print(f"Humidity: {location_description['humidity']}%")
+    else:
+        print("Couldn't retrieve weather data.")
 
-    print("This is a test to access the weather by Shafiq Rahman")
+    #print("This is a test to access the weather by Shafiq Rahman")
 
-    API_KEY = open('OpenWeather_API_key.py','r').read()
+    #API_KEY = open('OpenWeather_API_key.py','r').read()
     #API_KEY = "ea7462c3a327d8e268193e6ac9137887"
-    BASE_URL = f"https://api.openweathermap.org/data/2.5/weather?"
-    CITY = "Philadelphia"
-    url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
-    response = requests.get(url).json()
-    temp_kelvin = requests.get(url).json()
-    temp_kelvin = response['main']['temp']
-    temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(temp_kelvin)
-    feels_like_kelvin = response['main']['feels_like']
-    feels_like_celsius, feels_like_fahrenheit = kelvin_to_celsius_fahrenheit(feels_like_kelvin)
-    humidity = response['main']['humidity']
-    description = response['weather'][0]['description']
-    wind_speed = response['wind']['speed']
+    #BASE_URL = f"https://api.openweathermap.org/data/2.5/weather?"
+    #CITY = "Philadelphia"
+    #url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
+    #response = requests.get(url).json()
+    #temp_kelvin = requests.get(url).json()
+    #temp_kelvin = response['main']['temp']
+    #temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(temp_kelvin)
+    #feels_like_kelvin = response['main']['feels_like']
+    #feels_like_celsius, feels_like_fahrenheit = kelvin_to_celsius_fahrenheit(feels_like_kelvin)
+    #humidity = response['main']['humidity']
+    #description = response['weather'][0]['description']
+    #wind_speed = response['wind']['speed']
     # sunrise_time = dt.datetime.utcfromtimestamp(response['sys']['sunrise'] + response['timezone'])
-    sunrise_time = dt.datetime.fromtimestamp(response['sys']['sunrise'], dt.timezone.utc)
+    #sunrise_time = dt.datetime.fromtimestamp(response['sys']['sunrise'], dt.timezone.utc)
     # sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
-    sunset_time = dt.datetime.fromtimestamp(response['sys']['sunset'], dt.timezone.utc)
+    #sunset_time = dt.datetime.fromtimestamp(response['sys']['sunset'], dt.timezone.utc)
 
-    print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
-    print(f"Temperature in {CITY}: {temp_celsius} °C")
-    print(f"Wind speed in {CITY}: {wind_speed} mph.")
-    print(f"humidity in {CITY}: {humidity} .")
-    print(f"description in {CITY}: {description} .")
+    #print(f"Temperature in {CITY}: {temp_fahrenheit} °F")
+    #print(f"Temperature in {CITY}: {temp_celsius} °C")
+    #print(f"Wind speed in {CITY}: {wind_speed} mph.")
+    #print(f"humidity in {CITY}: {humidity} .")
+    #print(f"description in {CITY}: {description}.")
+    print(f"-----------------------------")
+    weather_condition = input("Enter desired weather condition (e.g., Fog, Wind): ").strip().lower()
 
-
+    # Process the condition
+    check_weather(weather_condition)
 
     client = Client()
     client.input_addr()
@@ -617,11 +733,33 @@ def main():
         return
 
     radio = MusicPlayer(resource_path("sound/snake_hunt.mp3"))
-    game = Game(client, radio)
+    # weather_condition = get_weather(CITY, API_KEY)
+    game = Game(client, radio, weather_condition)
     PauseMenu(game)
 
     game.start()
     game.game_loop()
+
+def check_weather(condition):
+    """
+    Function to check the weather from user input
+    Implemented by Ethan Ung
+    :param condition:
+    :return:
+    """
+    weather_data = {
+        "fog": "Visibility is low due to fog.",
+        "wind": "Wind speed is x mph.",
+        "rain": "Light rain is expected.",
+        "clear": "No significant weather conditions.",
+        "clouds": "It is cloudy"
+    }
+
+    if condition in weather_data:
+        print(weather_data[condition])
+    else:
+        print(f"No data available for condition: {condition}")
+
 
 if __name__ == '__main__':
     main()
