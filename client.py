@@ -1,4 +1,5 @@
 import os
+import random
 import socket
 import pickle
 
@@ -276,6 +277,9 @@ class Game():
         self.is_foggy = False
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
+        self.raindrops = []
+        if self.weather_condition == "rain":
+            self.create_raindrops(100)
 
     def adjust_gameplay(self):
         """
@@ -292,7 +296,7 @@ class Game():
             self.speed_multiplier = 1.2
         elif self.weather_condition == 'Wind':
             self.speed_multiplier = 1.2
-        elif self.weather_condition.lower() == 'Fog':
+        elif self.weather_condition == 'Fog':
             self.speed_multiplier = 1.0
             self.is_foggy = True
         print(f"Weather: {self.weather_condition}, Speed Multiplier: {self.speed_multiplier}")
@@ -446,11 +450,51 @@ class Game():
         # Apply fog effect
         # Implemented by Ethan Ung
         if self.weather_condition == "fog":
-            radius = 255  # Increase this value to expand the fog effect
+            radius = 255
             clear_radius = 10
             self.apply_fog(radius, clear_radius)
 
+        # Apply rain effect
+        # Implemented by Ethan Ung
+        if self.weather_condition == "rain":
+            self.apply_rain()
+
         pygame.display.flip()
+
+    def create_raindrops(self, num_drops):
+        """
+        Creates the raindrops for the rain animation
+        Implemented by Ethan Ung
+        :param num_drops:
+        :return:
+        """
+        # Run specific number of times
+        for _ in range(num_drops):
+            drop_x = random.randint(0, self.camera[0])
+            drop_y = random.randint(0, self.camera[1])
+            self.raindrops.append([drop_x, drop_y])  # Store raindrop as [x, y]
+
+    def apply_rain(self):
+        """
+        Apply a rain animation around the player to simulate rainy conditions
+        Implemented by Ethan Ung
+        :return:
+        """
+        rain_color = (0, 0, 255)  # Color of raindrops (blue)
+        drop_width = 2
+        drop_height = 10
+
+        # Updates the raindrops position
+        for drop in self.raindrops:
+            drop[1] += 5  # Move the raindrop downwards
+            # Prevents raindrops from being lost
+            if drop[1] > self.camera[1]:  # Reset if it goes off screen
+                drop[1] = 0
+                drop[0] = random.randint(0, self.camera[0])  # Randomize x position
+
+        # Draws the raindrops
+        for drop in self.raindrops:
+            pygame.draw.rect(self.window, rain_color, (drop[0], drop[1], drop_width, drop_height))
 
     def apply_fog(self, radius, clear_radius):
         """
@@ -722,7 +766,7 @@ def main():
     #print(f"humidity in {CITY}: {humidity} .")
     #print(f"description in {CITY}: {description}.")
     print(f"-----------------------------")
-    weather_condition = input("Enter desired weather condition (e.g., Fog, Wind): ").strip().lower()
+    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
 
     # Process the condition
     check_weather(weather_condition)
@@ -752,7 +796,7 @@ def check_weather(condition):
         "wind": "Wind speed is x mph.",
         "rain": "Light rain is expected.",
         "clear": "No significant weather conditions.",
-        "clouds": "It is cloudy"
+        "clouds": "Cloudy skies are seen"
     }
 
     if condition in weather_data:
