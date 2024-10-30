@@ -3,7 +3,11 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.13" />
   </component>
+<<<<<<< HEAD
   <component name="ProjectRootManager" version="2" languageLevel="JDK_22" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+=======
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_16" default="true" project-jdk-name="Python 3.9" project-jdk-type="Python SDK">
+>>>>>>> 7c07e168c4b1b79fc414880bfd6a23e882ec3ba2
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
