@@ -278,9 +278,11 @@ class Game():
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
         self.last_direction = (0, 0)
-        self.raindrops = []
+        self.drops = []
         if self.weather_condition == "rain":
-            self.create_raindrops(100)
+            self.create_drops(100)
+        if self.weather_condition == "snow":
+            self.create_drops(100)
 
     def start(self):
         """Create the game window."""
@@ -440,9 +442,58 @@ class Game():
         if self.weather_condition == "rain":
             self.apply_rain()
 
+        if self.weather_condition == "snow":
+            self.apply_snow()
+
         pygame.display.flip()
 
-    def create_raindrops(self, num_drops):
+    def apply_snow(self):
+        """
+        Apply a snow animation around the player to simulate snowy conditions
+        Implemented by Ethan Ung
+        :return:
+        """
+        snow_color = (255, 255, 255)  # Color of snowdrops (white)
+        drop_width = 2
+        drop_height = 2
+        window_width = self.window.get_width()
+        window_height = self.window.get_height()
+
+        # Get the current direction of the user
+        direction = self.get_direction()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = 5  # Slant right
+        elif horizontal_direction == -1:  # Moving left
+            slant = -5  # Slant left
+        else:
+            slant = 0  # No horizontal movement
+
+        # Updates the raindrops position
+        for drop in self.drops:
+            drop[1] += 3  # Move the raindrop downwards
+            drop[0] += slant  # Apply slant based on last input
+
+            # Prevents raindrops from being lost
+            if drop[1] > window_height:  # If Y position of a drop goes greater screen height
+                drop[1] = 0  # Reset above
+                drop[0] = random.randint(0, window_width)  # Randomize x position
+
+            # If the X position goes beyond the screen width, reset to left
+            if drop[0] > window_width:
+                drop[0] = 0
+
+            # If the x position goes beyond the screen width, reset to right
+            if drop[0] < 0:  # Handles user going left when raining
+                drop[0] = window_width  # Reset to right side if it goes off screen left
+
+        # Draws the raindrops
+        for drop in self.drops:
+            pygame.draw.rect(self.window, snow_color, (drop[0], drop[1], drop_width, drop_height))
+
+    def create_drops(self, num_drops):
         """
         Creates the raindrops for the rain animation
         Implemented by Ethan Ung
@@ -453,7 +504,7 @@ class Game():
         for _ in range(num_drops):
             drop_x = random.randint(0, self.camera[0])
             drop_y = random.randint(0, self.camera[1])
-            self.raindrops.append([drop_x, drop_y])  # Store raindrop as [x, y]
+            self.drops.append([drop_x, drop_y])  # Store raindrop as [x, y]
 
     def apply_rain(self):
         """
@@ -480,24 +531,25 @@ class Game():
             slant = 0  # No horizontal movement
 
         # Updates the raindrops position
-        for drop in self.raindrops:
+        for drop in self.drops:
             drop[1] += 5  # Move the raindrop downwards
             drop[0] += slant  # Apply slant based on last input
 
             # Prevents raindrops from being lost
-            if drop[1] > window_height:  # Reset if it goes off screen
+            if drop[1] > window_height:  # If Y position of a drop goes greater screen height
                 drop[1] = 0  # Reset above
                 drop[0] = random.randint(0, window_width)  # Randomize x position
 
-            # If the x position goes beyond the screen width, reset to left
+            # If the X position goes beyond the screen width, reset to left
             if drop[0] > window_width:
                 drop[0] = 0
 
-            # If the x position goes beyond the screen width, reset to left
-            if drop[0] < 0:  # Handle left overflow
+            # If the x position goes beyond the screen width, reset to right
+            if drop[0] < 0:  # Handles user going left when raining
                 drop[0] = window_width  # Reset to right side if it goes off screen left
+
         # Draws the raindrops
-        for drop in self.raindrops:
+        for drop in self.drops:
             pygame.draw.rect(self.window, rain_color, (drop[0], drop[1], drop_width, drop_height))
 
     def apply_fog(self, radius, clear_radius):
@@ -777,13 +829,13 @@ def main():
     #print(f"description in {CITY}: {description}.")
 
     print(f"-----------------------------")
-    #weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
+    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
 
     # Process the condition
-    #check_weather(weather_condition)
+    check_weather(weather_condition)
 
-    weather_condition = location_description['weather'] if location_description else "Clear"
-    check_weather(weather_condition.lower())
+    #weather_condition = location_description['weather'] if location_description else "Clear"
+    #check_weather(weather_condition.lower())
 
     client = Client()
     client.input_addr()
@@ -812,6 +864,7 @@ def check_weather(condition):
         "rain": "Light rain is expected.",
         "drizzle": "Light rain is falling.",
         "thunderstorm": "Thunderstorms are occurring.",
+        "snow": "It is looking a lot like christmas",
     }
 
     if condition in weather_data:
