@@ -277,29 +277,10 @@ class Game():
         self.is_foggy = False
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
+        self.last_direction = (0, 0)
         self.raindrops = []
         if self.weather_condition == "rain":
             self.create_raindrops(100)
-
-    def adjust_gameplay(self):
-        """
-        Modify gameplay based on weather condition
-        Implemented by Ethan Ung
-        :return:
-        """
-
-        if self.weather_condition == 'Clear':
-            self.speed_multiplier = 1.0
-        elif self.weather_condition == 'Clouds':
-            self.speed_multiplier = 0.9
-        elif self.weather_condition == 'Rain':
-            self.speed_multiplier = 1.2
-        elif self.weather_condition == 'Wind':
-            self.speed_multiplier = 1.2
-        elif self.weather_condition == 'Fog':
-            self.speed_multiplier = 1.0
-            self.is_foggy = True
-        print(f"Weather: {self.weather_condition}, Speed Multiplier: {self.speed_multiplier}")
 
     def start(self):
         """Create the game window."""
@@ -483,15 +464,38 @@ class Game():
         rain_color = (0, 0, 255)  # Color of raindrops (blue)
         drop_width = 2
         drop_height = 10
+        window_width = self.window.get_width()
+        window_height = self.window.get_height()
+
+        # Get the current direction of the user
+        direction = self.get_direction()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = 5  # Slant right
+        elif horizontal_direction == -1:  # Moving left
+            slant = -5  # Slant left
+        else:
+            slant = 0  # No horizontal movement
 
         # Updates the raindrops position
         for drop in self.raindrops:
             drop[1] += 5  # Move the raindrop downwards
-            # Prevents raindrops from being lost
-            if drop[1] > self.camera[1]:  # Reset if it goes off screen
-                drop[1] = 0
-                drop[0] = random.randint(0, self.camera[0])  # Randomize x position
+            drop[0] += slant  # Apply slant based on last input
 
+            # Prevents raindrops from being lost
+            if drop[1] > window_height:  # Reset if it goes off screen
+                drop[1] = 0  # Reset above
+                drop[0] = random.randint(0, window_width)  # Randomize x position
+
+            # If the x position goes beyond the screen width, reset to left
+            if drop[0] > window_width:
+                drop[0] = 0
+
+            # If the x position goes beyond the screen width, reset to left
+            if drop[0] < 0:  # Handle left overflow
+                drop[0] = window_width  # Reset to right side if it goes off screen left
         # Draws the raindrops
         for drop in self.raindrops:
             pygame.draw.rect(self.window, rain_color, (drop[0], drop[1], drop_width, drop_height))
@@ -562,15 +566,21 @@ class Game():
         """
         direction = None
         keys = pygame.key.get_pressed()
+        new_direction = (0, 0)
         if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
-            direction = (-1, 0)
+            new_direction = (-1, 0)
         if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
-            direction = (1, 0)
+            new_direction = (1, 0)
         if (keys[pygame.K_UP] or keys[pygame.K_w]):
-            direction = (0, -1)
+            new_direction = (0, -1)
         if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
-            direction = (0, 1)
-        return direction
+            new_direction = (0, 1)
+
+        # Only update last_direction if there's new input
+        if new_direction != (0, 0):
+            self.last_direction = new_direction
+
+        return self.last_direction
 
     def game_loop(self):
         """
@@ -765,11 +775,15 @@ def main():
     #print(f"Wind speed in {CITY}: {wind_speed} mph.")
     #print(f"humidity in {CITY}: {humidity} .")
     #print(f"description in {CITY}: {description}.")
+
     print(f"-----------------------------")
-    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
+    #weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
 
     # Process the condition
-    check_weather(weather_condition)
+    #check_weather(weather_condition)
+
+    weather_condition = location_description['weather'] if location_description else "Clear"
+    check_weather(weather_condition.lower())
 
     client = Client()
     client.input_addr()
@@ -778,7 +792,7 @@ def main():
 
     radio = MusicPlayer(resource_path("sound/snake_hunt.mp3"))
     # weather_condition = get_weather(CITY, API_KEY)
-    game = Game(client, radio, weather_condition)
+    game = Game(client, radio, weather_condition.lower())
     PauseMenu(game)
 
     game.start()
@@ -793,17 +807,17 @@ def check_weather(condition):
     """
     weather_data = {
         "fog": "Visibility is low due to fog.",
-        "wind": "Wind speed is x mph.",
-        "rain": "Light rain is expected.",
         "clear": "No significant weather conditions.",
-        "clouds": "Cloudy skies are seen"
+        "clouds": "Cloudy skies are seen.",
+        "rain": "Light rain is expected.",
+        "drizzle": "Light rain is falling.",
+        "thunderstorm": "Thunderstorms are occurring.",
     }
 
     if condition in weather_data:
         print(weather_data[condition])
     else:
         print(f"No data available for condition: {condition}")
-
 
 if __name__ == '__main__':
     main()
