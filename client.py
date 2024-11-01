@@ -502,9 +502,10 @@ class Game():
         """
         Apply a snow animation around the player to simulate snowy conditions
         Implemented by Ethan Ung
+
         :return:
         """
-        snow_color = (255, 255, 255)  # Color of snowdrops (white)
+        snow_color = (255, 255, 255)  # Color of snow (white)
         drop_width = 5
         drop_height = 5
         window_width = self.window.get_width()
@@ -516,18 +517,19 @@ class Game():
         # Determine the slant based on the last user direction
         horizontal_direction = self.last_direction[0]
         if horizontal_direction == 1:  # Moving right
-            slant = 5  # Slant right
-        elif horizontal_direction == -1:  # Moving left
             slant = -5  # Slant left
+        elif horizontal_direction == -1:  # Moving left
+            slant = 5  # Slant right
         else:
             slant = 0  # No horizontal movement
 
-        # Updates the raindrops position
+        # Updates the snows position
+        # Loops through every drop
         for drop in self.drops:
-            drop[1] += 3  # Move the raindrop downwards
+            drop[1] += 3  # Move the snow downwards
             drop[0] += slant  # Apply slant based on last input
 
-            # Prevents raindrops from being lost
+            # Prevents snow from being lost
             if drop[1] > window_height:  # If Y position of a drop goes greater screen height
                 drop[1] = 0  # Reset above
                 drop[0] = random.randint(0, window_width)  # Randomize x position
@@ -537,10 +539,10 @@ class Game():
                 drop[0] = 0
 
             # If the x position goes beyond the screen width, reset to right
-            if drop[0] < 0:  # Handles user going left when raining
+            if drop[0] < 0:  # Handles user going left when snowing
                 drop[0] = window_width  # Reset to right side if it goes off screen left
 
-        # Draws the raindrops
+        # Draws the snow
         for drop in self.drops:
             pygame.draw.rect(self.window, snow_color, (drop[0], drop[1], drop_width, drop_height))
 
@@ -553,7 +555,10 @@ class Game():
     def create_drops(self, num_drops):
         """
         Creates the raindrops for the rain animation
+        Iterates num_drops times to create each drop
+        Randomly assigns x and y positions within camera's current view (prevents animations outside of camera)
         Implemented by Ethan Ung
+
         :param num_drops:
         :return:
         """
@@ -567,6 +572,7 @@ class Game():
         """
         Apply a rain animation around the player to simulate rainy conditions
         Implemented by Ethan Ung
+
         :return:
         """
         rain_color = (0, 0, 255)  # Color of raindrops (blue)
@@ -612,6 +618,8 @@ class Game():
     def apply_fog(self, radius, clear_radius):
         """
         Apply a fog around the player to simulate foggy conditions
+        Creates fog_texture if not exist
+
         Implemented by Ethan Ung
 
         :param radius:
@@ -632,7 +640,11 @@ class Game():
 
     def create_fog_texture(self, radius, clear_radius):
         """
-        Creates a fog texture for the apply_fog function
+        Creates a fog texture for the apply_fog function (rectangle)
+        Iterates over each pixel in the fog texture to calculate its distance from the center
+        Determines transparency (alpha) based on distance
+        Fully transparent in the middle (clear_radius) and gradually becomes opaque towards the edge of the screen
+        0 (fully transparent) and 255 (fully opaque)
         Implemented by Ethan Ung
 
         :param radius:
@@ -641,15 +653,22 @@ class Game():
         """
         fog_texture = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
 
+        # Euclidean distance formula: Square root of (x - center_x)^2 + (y - center_y)^2
+        # In our case center_x and center_y will represent radius as the center of the fog is at (radius, radius)
+        # Determines how far the current pixel is from the center of the fog effect
+        # If a pixel is at the center of the fog, the distance will be 0. As you move outward, the distance increases
         for y in range(fog_texture.get_height()):
             for x in range(fog_texture.get_width()):
                 distance = ((x - radius) ** 2 + (y - radius) ** 2) ** 0.5
 
                 if distance < clear_radius:
                     alpha = 0  # Fully transparent in the center of the camera
+                # If distance is between clear_radius and radius,
+                # the calculation determines the alpha value, which controls the pixel's transparency
                 elif distance < radius:
                     # Calculate alpha for the fog within the radius
                     alpha = min(255, int(255 * ((distance - clear_radius) / (radius - clear_radius))))
+                # If stance exceeds radius set alpha to 255
                 else:
                     alpha = 255  # Fully opaque at the edges
 
@@ -657,14 +676,22 @@ class Game():
         return fog_texture
 
     def initialize_stars(self):
-        """Initialize star positions."""
-        self.drops = [[random.randint(0, 500), random.randint(0, 500)] for _ in range(100)]
+        """
+        Initializes the stars for apply_stars
+        Creates a list of 100 stars with random x and y coordinates within camera[x, y]
+        Implemented by Ethan Ung
+        :return:
+        """
+        self.drops = [[random.randint(0, self.camera[0]), random.randint(0, self.camera[1])] for _ in range(100)]
         print(f"Stars initialized: {self.drops}")
 
     def apply_stars(self):
         """
         Apply a star animation around the player to simulate a starry night sky.
         Activated upon applying the konami code
+        Iterates through each star, moving it downwards
+        If it goes off the bottom of the screen, it resets to the top with a new x-coordinate
+        Loops through each star and draws it with a random size and color
         Implemented by Ethan Ung
 
         :return:
@@ -735,7 +762,9 @@ class Game():
     def check_konami_code(self, key):
         """
         Check if the user enters the keys that match the current position in the Konami code
+        Gets current time for managing input timing (prevents multiple keys being pressed even though user is tapping)
         Implemented by Ethan Ung
+
         :param key:
         :return:
         """
