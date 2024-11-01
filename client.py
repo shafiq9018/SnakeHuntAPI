@@ -279,10 +279,13 @@ class Game():
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
         self.last_direction = (0, 0)
         self.drops = []
+        self.windgusts = []
         if self.weather_condition == "rain":
             self.create_drops(100)
         if self.weather_condition == "snow":
             self.create_drops(100)
+        if self.weather_condition == "wind":
+            self.create_windgusts(30)
 
     def start(self):
         """Create the game window."""
@@ -445,7 +448,38 @@ class Game():
         if self.weather_condition == "snow":
             self.apply_snow()
 
+        if self.weather_condition == "wind":
+            self.apply_wind()
+
         pygame.display.flip()
+
+    def apply_wind(self):
+        wind_color = (240, 240, 240)  # Color of wind gusts (light grey)
+        gust_width = 20
+        gust_height = 2
+        window_width = self.window.get_width()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = -3  # Slow down wind speed while snake is running w/ the wind
+        elif horizontal_direction == -1:  # Moving left
+            slant = 3  # Speed up wind speed while snake is running against the wind
+        else:
+            slant = 0  # No horizontal movement
+
+        # Updates the wind gust's position
+        for gust in self.windgusts:
+            gust[0] += 5  # Move the gust of wind right
+            gust[0] += slant
+
+            # If the x position goes beyond the screen width, reset to left
+            if gust[0] > window_width:
+                gust[0] = 0
+
+        # Draws the windgusts
+        for gust in self.windgusts:
+            pygame.draw.rect(self.window, wind_color, (gust[0], gust[1], gust_width, gust_height))
 
     def apply_snow(self):
         """
@@ -492,6 +526,12 @@ class Game():
         # Draws the raindrops
         for drop in self.drops:
             pygame.draw.rect(self.window, snow_color, (drop[0], drop[1], drop_width, drop_height))
+
+    def create_windgusts(self, num_gusts):
+        for _ in range(num_gusts):
+            gust_x = random.randint(0, self.camera[0])
+            gust_y = random.randint(0, self.camera[1])
+            self.windgusts.append([gust_x, gust_y]) # Store gust of wind as [x, y]
 
     def create_drops(self, num_drops):
         """
@@ -865,6 +905,7 @@ def check_weather(condition):
         "drizzle": "Light rain is falling.",
         "thunderstorm": "Thunderstorms are occurring.",
         "snow": "It is looking a lot like christmas",
+        "wind": "It is windy out"
     }
 
     if condition in weather_data:
