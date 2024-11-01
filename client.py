@@ -279,7 +279,7 @@ class Game():
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
         self.last_direction = (0, 0)
         self.drops = []
-        # Implemented by Ethan Ung
+        self.windgusts = []
         self.konami = False
         self.konami_code = [pygame.K_UP, pygame.K_UP, pygame.K_DOWN, pygame.K_DOWN,
                             pygame.K_LEFT, pygame.K_RIGHT, pygame.K_LEFT, pygame.K_RIGHT,
@@ -293,6 +293,8 @@ class Game():
             self.create_drops(20)
         if self.weather_condition == "drizzle":
             self.create_drops(30)
+        if self.weather_condition == "wind":
+            self.create_windgusts(30)
 
     def start(self):
         """Create the game window."""
@@ -458,22 +460,53 @@ class Game():
         if self.weather_condition == "snow":
             self.apply_snow()
 
+        # Apply wind effect
+        if self.weather_condition == "wind":
+            self.apply_wind()
+
         # if Konami code has been entered apply stars
         if self.konami:
             self.apply_stars()
 
         pygame.display.flip()
 
+    def apply_wind(self):
+        wind_color = (240, 240, 240)  # Color of wind gusts (light grey)
+        gust_width = 20
+        gust_height = 2
+        window_width = self.window.get_width()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = -3  # Slow down wind speed while snake is running w/ the wind
+        elif horizontal_direction == -1:  # Moving left
+            slant = 3  # Speed up wind speed while snake is running against the wind
+        else:
+            slant = 0  # No horizontal movement
+
+        # Updates the wind gust's position
+        for gust in self.windgusts:
+            gust[0] += 5  # Move the gust of wind right
+            gust[0] += slant
+
+            # If the x position goes beyond the screen width, reset to left
+            if gust[0] > window_width:
+                gust[0] = 0
+
+        # Draws the windgusts
+        for gust in self.windgusts:
+            pygame.draw.rect(self.window, wind_color, (gust[0], gust[1], gust_width, gust_height))
+
     def apply_snow(self):
         """
         Apply a snow animation around the player to simulate snowy conditions
         Implemented by Ethan Ung
-
         :return:
         """
         snow_color = (255, 255, 255)  # Color of snowdrops (white)
-        drop_width = 6
-        drop_height = 6
+        drop_width = 5
+        drop_height = 5
         window_width = self.window.get_width()
         window_height = self.window.get_height()
 
@@ -511,28 +544,34 @@ class Game():
         for drop in self.drops:
             pygame.draw.rect(self.window, snow_color, (drop[0], drop[1], drop_width, drop_height))
 
+    def create_windgusts(self, num_gusts):
+        for _ in range(num_gusts):
+            gust_x = random.randint(0, self.camera[0])
+            gust_y = random.randint(0, self.camera[1])
+            self.windgusts.append([gust_x, gust_y]) # Store gust of wind as [x, y]
+
     def create_drops(self, num_drops):
         """
         Creates the raindrops for the rain animation
         Implemented by Ethan Ung
-
         :param num_drops:
         :return:
         """
+        # Run specific number of times
         for _ in range(num_drops):
-            drop_x = random.randint(0, self.camera[0])  # Random X position
-            drop_y = random.randint(0, self.camera[1])  # Random Y position
-            drop_length = 5
-            drop_color = (0, 0, 255)  # Color blue
-            self.drops.append([drop_x, drop_y, drop_length, drop_color])  # Store raindrop as [x, y, length, color]
+            drop_x = random.randint(0, self.camera[0])
+            drop_y = random.randint(0, self.camera[1])
+            self.drops.append([drop_x, drop_y])  # Store raindrop as [x, y]
 
     def apply_rain(self):
         """
         Apply a rain animation around the player to simulate rainy conditions
         Implemented by Ethan Ung
-
         :return:
         """
+        rain_color = (0, 0, 255)  # Color of raindrops (blue)
+        drop_width = 2
+        drop_height = 10
         window_width = self.window.get_width()
         window_height = self.window.get_height()
 
@@ -541,19 +580,20 @@ class Game():
 
         # Determine the slant based on the last user direction
         horizontal_direction = self.last_direction[0]
-        slant = 0
         if horizontal_direction == 1:  # Moving right
-            slant = 3  # Slight slant right
+            slant = 3  # Slant right
         elif horizontal_direction == -1:  # Moving left
-            slant = -3  # Slight slant left
+            slant = -3  # Slant left
+        else:
+            slant = 0  # No horizontal movement
 
         # Updates the raindrops position
         for drop in self.drops:
             drop[1] += 5  # Move the raindrop downwards
-            drop[0] += slant  # Apply slant
+            drop[0] += slant  # Apply slant based on last input
 
             # Prevents raindrops from being lost
-            if drop[1] > window_height:  # If Y position of a drop goes greater than screen height
+            if drop[1] > window_height:  # If Y position of a drop goes greater screen height
                 drop[1] = 0  # Reset above
                 drop[0] = random.randint(0, window_width)  # Randomize x position
 
@@ -561,13 +601,13 @@ class Game():
             if drop[0] > window_width:
                 drop[0] = 0
 
-            # If the X position goes beyond the screen width, reset to right
+            # If the x position goes beyond the screen width, reset to right
             if drop[0] < 0:  # Handles user going left when raining
                 drop[0] = window_width  # Reset to right side if it goes off screen left
 
         # Draws the raindrops
         for drop in self.drops:
-            pygame.draw.rect(self.window, drop[3], (drop[0], drop[1], 1, drop[2]))
+            pygame.draw.rect(self.window, rain_color, (drop[0], drop[1], drop_width, drop_height))
 
     def apply_fog(self, radius, clear_radius):
         """
@@ -922,7 +962,7 @@ def main():
     #print(f"description in {CITY}: {description}.")
 
     print(f"-----------------------------")
-    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Drizzle, Wind, Mist, Snow): ").strip().lower()
+    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
 
     # Process the condition
     check_weather(weather_condition)
@@ -954,7 +994,7 @@ def check_weather(condition):
         "mist": "Visibility is low due to fog.",
         "clear": "No significant weather conditions.",
         "clouds": "Cloudy skies are seen.",
-        "rain": "Rain is expected.",
+        "rain": "Rain is falling.",
         "drizzle": "Light rain is falling.",
         "thunderstorm": "Thunderstorms are occurring.",
         "snow": "It is looking a lot like christmas",
