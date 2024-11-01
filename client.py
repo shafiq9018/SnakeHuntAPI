@@ -705,7 +705,7 @@ class Game():
             print(f"Failed to load image: {e}")
             return None
     """
-
+    # remove all of these lines since I only made them to keep track of my code and changes.
     # ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     def get_direction(self):
