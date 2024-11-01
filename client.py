@@ -5,7 +5,7 @@ import pickle
 
 import pygame
 import pygame.font
-from pkg_resources import non_empty_lines
+# from pkg_resources import non_empty_lines
 from pygame.locals import *
 import tkinter
 from threading import Thread
