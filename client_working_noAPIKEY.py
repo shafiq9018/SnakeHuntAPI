@@ -843,7 +843,7 @@ def get_API_key():
 def load_weather_pattern(city_name):
     # Based on the city we can load fresh information from OpenWeatherMap.org
     weather_data = get_weather_data(city_name)
-    icon_code = weather_data['weather']['icon']  # Extract the icon code
+    icon_code = weather_data['weather'][0]['icon']  # Extract the icon code
     icon_image = fetch_weather_icon(icon_code)
     return icon_image
 
@@ -890,6 +890,7 @@ def main():
         print(f"Humidity: {location_description['humidity']}%")
     else:
         print("Couldn't retrieve weather data.")
+
 
     #print("This is a test to access the weather by Shafiq Rahman")
 

@@ -5,7 +5,6 @@ import pickle
 
 import pygame
 import pygame.font
-from pkg_resources import non_empty_lines
 from pygame.locals import *
 import tkinter
 from threading import Thread
@@ -17,6 +16,7 @@ import sys
 import datetime as dt
 # import datetime
 import requests
+from six import print_
 
 from game import gameWindowSize
 from gamedata import *
@@ -27,6 +27,10 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
+
+from PIL import Image
+from io import BytesIO
+import image
 
 root = Tk()
 
@@ -263,15 +267,15 @@ class Game():
     game_loop()
     """
 
-    def __init__(self, client, radio, weather_condition):
+    def __init__(self, client, radio, weather_condition,city):
         """Initialize the game"""
         pygame.init()
         # I added this environment variable to be pulled from on location instead of hardcoding magic numbers -Shafiq.
         # I renamed camera to gameWindowSize for ease of readability -Shafiq.
         # Original code : self.camera = gameWindowSize(1000, 1000) -Shafiq.
         # self.gameWindowSize = (os.getenv('GAME_WINDOW_WIDTH'),os.getenv('GAME_WINDOW_HEIGHT'))
-        self.weather_condition = weather_condition # Store the weather condition
-        self.sky_cloud = self.load_weather_pattern(weather_condition)
+        self.weather_condition = weather_condition # Store the weather condition ///////////////////
+        self.sky_patterns = [] # for clouds or sun etc. ///////////////////////
         self.camera = (500, 500)
         self.board = (1000, 1000)
         self.client = client
@@ -279,32 +283,21 @@ class Game():
         self.is_foggy = False
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
-        self.raindrops = []
-        self.sky_patterns = [] # for clouds or sun etc.
+        self.last_direction = (0, 0)
+        self.drops = []
+        self.city_name = city # May need to re-think if needed or not.
+        self.sky_cloud = load_weather_pattern(city)
+
         if self.weather_condition == "rain":
-            self.create_raindrops(100)
+            self.create_drops(100)
+        if self.weather_condition == "snow":
+            self.create_drops(100)
         if self.weather_condition == "clouds":
-            self.create_weather_condition(15) # Create 15 weather patterns
+            self.create_weather_condition(8) # Create 15 weather patterns
 
-    def adjust_gameplay(self):
-        """
-        Modify gameplay based on weather condition
-        Implemented by Ethan Ung
-        :return:
-        """
-
-        if self.weather_condition == 'Clear':
-            self.speed_multiplier = 1.0
-        elif self.weather_condition == 'Clouds':
-            self.speed_multiplier = 0.9
-        elif self.weather_condition == 'Rain':
-            self.speed_multiplier = 1.2
-        elif self.weather_condition == 'Wind':
-            self.speed_multiplier = 1.2
-        elif self.weather_condition == 'Fog':
-            self.speed_multiplier = 1.0
-            self.is_foggy = True
-        print(f"Weather: {self.weather_condition}, Speed Multiplier: {self.speed_multiplier}")
+    # returns the player city name for the score board.
+    def player_city(self):
+        return self.city_name
 
     def start(self):
         """Create the game window."""
@@ -315,17 +308,15 @@ class Game():
     def show_leaderboard(self, leaderboard):
         """
         Display the leaderboard.
-
         Parameters
         ----------
         leaderboard (list):
-            A list of LeaderboardEntry objects. Used to display the leaderboard.
-
+        A list of LeaderboardEntry objects. Used to display the leaderboard.
         Return
         ------
         None
         """
-        top = 8
+        top = 8   # Move the score board down by 8 pixels to prepare room for the weather - Shafiq
         for i, entry in enumerate(leaderboard):
             record_string = f'{i + 1}.   {entry.name}   {entry.score}'
             record = self.leaderboard_font.render(record_string, True, (255, 255, 255))
@@ -333,6 +324,7 @@ class Game():
             record_rect.topleft = (8, top)
             self.window.blit(record, record_rect)
             top += 13
+
 
     def render_bounds(self, head):
         """
@@ -377,7 +369,7 @@ class Game():
         head (CellData):
             A minimal representation of head object
         rect (tuple[int, int, int, int]):
-            A tuple with x positon, y position, x width,
+            A tuple with x position, y position, x width,
             and y width respectively. Represents the
             position of the head according to the client's
             point of view (not the true position).
@@ -464,15 +456,64 @@ class Game():
         if self.weather_condition == "rain":
             self.apply_rain()
 
-        # Apply rain effect
-        # Adding clouds by Shafiq Rahman
+        if self.weather_condition == "snow":
+            self.apply_snow()
+
+
+        # Apply weather effect
+        # Adding clouds, sun, lightning etc. by Shafiq Rahman
         if self.weather_condition == "clouds":
             self.apply_weather_condition(self.sky_cloud)
 
-
         pygame.display.flip()
 
-    def create_raindrops(self, num_drops):
+    def apply_snow(self):
+        """
+        Apply a snow animation around the player to simulate snowy conditions
+        Implemented by Ethan Ung
+        :return:
+        """
+        snow_color = (255, 255, 255)  # Color of snowdrops (white)
+        drop_width = 2
+        drop_height = 2
+        window_width = self.window.get_width()
+        window_height = self.window.get_height()
+
+        # Get the current direction of the user
+        direction = self.get_direction()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = 5  # Slant right
+        elif horizontal_direction == -1:  # Moving left
+            slant = -5  # Slant left
+        else:
+            slant = 0  # No horizontal movement
+
+        # Updates the raindrops position
+        for drop in self.drops:
+            drop[1] += 3  # Move the raindrop downwards
+            drop[0] += slant  # Apply slant based on last input
+
+            # Prevents raindrops from being lost
+            if drop[1] > window_height:  # If Y position of a drop goes greater screen height
+                drop[1] = 0  # Reset above
+                drop[0] = random.randint(0, window_width)  # Randomize x position
+
+            # If the X position goes beyond the screen width, reset to left
+            if drop[0] > window_width:
+                drop[0] = 0
+
+            # If the x position goes beyond the screen width, reset to right
+            if drop[0] < 0:  # Handles user going left when raining
+                drop[0] = window_width  # Reset to right side if it goes off screen left
+
+        # Draws the raindrops
+        for drop in self.drops:
+            pygame.draw.rect(self.window, snow_color, (drop[0], drop[1], drop_width, drop_height))
+
+    def create_drops(self, num_drops):
         """
         Creates the raindrops for the rain animation
         Implemented by Ethan Ung
@@ -483,7 +524,7 @@ class Game():
         for _ in range(num_drops):
             drop_x = random.randint(0, self.camera[0])
             drop_y = random.randint(0, self.camera[1])
-            self.raindrops.append([drop_x, drop_y])  # Store raindrop as [x, y]
+            self.drops.append([drop_x, drop_y])  # Store raindrop as [x, y]
 
     def apply_rain(self):
         """
@@ -494,17 +535,41 @@ class Game():
         rain_color = (0, 0, 255)  # Color of raindrops (blue)
         drop_width = 2
         drop_height = 10
+        window_width = self.window.get_width()
+        window_height = self.window.get_height()
+
+        # Get the current direction of the user
+        direction = self.get_direction()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = 5  # Slant right
+        elif horizontal_direction == -1:  # Moving left
+            slant = -5  # Slant left
+        else:
+            slant = 0  # No horizontal movement
 
         # Updates the raindrops position
-        for drop in self.raindrops:
+        for drop in self.drops:
             drop[1] += 5  # Move the raindrop downwards
+            drop[0] += slant  # Apply slant based on last input
+
             # Prevents raindrops from being lost
-            if drop[1] > self.camera[1]:  # Reset if it goes off screen
-                drop[1] = 0
-                drop[0] = random.randint(0, self.camera[0])  # Randomize x position
+            if drop[1] > window_height:  # If Y position of a drop goes greater screen height
+                drop[1] = 0  # Reset above
+                drop[0] = random.randint(0, window_width)  # Randomize x position
+
+            # If the X position goes beyond the screen width, reset to left
+            if drop[0] > window_width:
+                drop[0] = 0
+
+            # If the x position goes beyond the screen width, reset to right
+            if drop[0] < 0:  # Handles user going left when raining
+                drop[0] = window_width  # Reset to right side if it goes off screen left
 
         # Draws the raindrops
-        for drop in self.raindrops:
+        for drop in self.drops:
             pygame.draw.rect(self.window, rain_color, (drop[0], drop[1], drop_width, drop_height))
 
     def apply_fog(self, radius, clear_radius):
@@ -554,8 +619,6 @@ class Game():
                 fog_texture.set_at((x, y), (255, 255, 255, alpha))  # White fog
         return fog_texture
 
-    # ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     def apply_weather_condition(self, sky_cloud):
         """
         Apply the clouds in the sky based on the collection created by create_weather_condition
@@ -563,16 +626,12 @@ class Game():
         """
 
         for pattern in self.sky_patterns:
-            pattern[0] += 10
-            if pattern[0] > self.camera[0]:
+            pattern[0] += 1
+            if pattern[0] > self.camera[1]:
                 pattern[0] = 0
                 pattern[1] = random.randint(0, self.camera[1])
         for pattern in self.sky_patterns:
             self.window.blit(sky_cloud,(pattern[0],pattern[1]))
-
-
-
-
 
     def create_weather_condition(self,num_clouds):
         """
@@ -588,21 +647,6 @@ class Game():
             cloud_x = random.randint(0, self.camera[0])
             cloud_y = random.randint(0, int(self.camera[1] / 4))
             self.sky_patterns.append([cloud_x, cloud_y, cloud_direction]) # The clouds are stored as [x, y, direction]
-
-    def load_weather_pattern(self, weather_condition):
-        # Based on the weather_condition we can load other pictures for future enhancements
-        try:
-            weather_image = pygame.image.load('weather_API_images/cloudy_no_rain.png')
-            if weather_condition == "Clouds":
-                weather_image = pygame.image.load('weather_API_images/cloudy_no_rain.png')
-            return weather_image
-        except pygame.error as e:
-            print(f"Failed to load image: {e}")
-            return None
-
-
-    # ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     def get_direction(self):
         """
@@ -623,15 +667,21 @@ class Game():
         """
         direction = None
         keys = pygame.key.get_pressed()
+        new_direction = (0, 0)
         if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
-            direction = (-1, 0)
+            new_direction = (-1, 0)
         if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
-            direction = (1, 0)
+            new_direction = (1, 0)
         if (keys[pygame.K_UP] or keys[pygame.K_w]):
-            direction = (0, -1)
+            new_direction = (0, -1)
         if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
-            direction = (0, 1)
-        return direction
+            new_direction = (0, 1)
+
+        # Only update last_direction if there's new input
+        if new_direction != (0, 0):
+            self.last_direction = new_direction
+
+        return self.last_direction
 
     def game_loop(self):
         """
@@ -784,6 +834,46 @@ def get_description(location):
     else:
         return None
 
+# We can consolidate this or hide this key later for futrue projects.
+def get_API_key():
+    API_KEY = 'ea7462c3a327d8e268193e6ac9137887'
+    return API_KEY
+
+
+def load_weather_pattern(city_name):
+    # Based on the city we can load fresh information from OpenWeatherMap.org
+    weather_data = get_weather_data(city_name)
+    icon_code = weather_data['weather'][0]['icon']  # Extract the icon code
+    icon_image = fetch_weather_icon(icon_code)
+    return icon_image
+
+
+# Fetch weather data from OpenWeatherMap
+def get_weather_data(city_name):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={get_API_key()}"
+    response = requests.get(url)
+    data = response.json()
+    return data
+"""
+# Extract icon code from weather data and fetch the icon image
+def fetch_weather_icon(icon_code):
+    icon_url = f"http://openweathermap.org/img/wn/{icon_code}@2x.png"
+    response = requests.get(icon_url)
+    img = Image.open(BytesIO(response.content))
+    return img
+"""
+
+def fetch_weather_icon(icon_code):
+    icon_url = f"http://openweathermap.org/img/wn/{icon_code}@2x.png"
+    response = requests.get(icon_url)
+    img = Image.open(BytesIO(response.content))
+    # Convert the PIL Image to a format pygame can use
+    img_data = img.tobytes()  # Obtain raw image data from the PIL image
+    img_mode = img.mode  # Get the mode ('RGB', 'RGBA')
+    img_size = img.size  # Get image size as (width, height)
+    # Create a Surface from the raw image data
+    return pygame.image.fromstring(img_data, img_size, img_mode)
+
 def main():
     """
     User can input their location and then print description; weather, temperature, wind_speed, humidity
@@ -792,6 +882,7 @@ def main():
     """
     location = input("Enter your location: ")
     location_description = get_description(location)
+    print(location_description)
     if location_description:
         print(f"Weather: {location_description['weather']}")
         print(f"Temperature: {location_description['temperature']}°C")
@@ -826,11 +917,15 @@ def main():
     #print(f"Wind speed in {CITY}: {wind_speed} mph.")
     #print(f"humidity in {CITY}: {humidity} .")
     #print(f"description in {CITY}: {description}.")
+
     print(f"-----------------------------")
     weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
 
     # Process the condition
     check_weather(weather_condition)
+
+    #weather_condition = location_description['weather'] if location_description else "Clear"
+    #check_weather(weather_condition.lower())
 
     client = Client()
     client.input_addr()
@@ -839,7 +934,7 @@ def main():
 
     radio = MusicPlayer(resource_path("sound/snake_hunt.mp3"))
     # weather_condition = get_weather(CITY, API_KEY)
-    game = Game(client, radio, weather_condition)
+    game = Game(client, radio, weather_condition.lower(), location)
     PauseMenu(game)
 
     game.start()
@@ -854,17 +949,18 @@ def check_weather(condition):
     """
     weather_data = {
         "fog": "Visibility is low due to fog.",
-        "wind": "Wind speed is x mph.",
-        "rain": "Light rain is expected.",
         "clear": "No significant weather conditions.",
-        "clouds": "Cloudy skies are seen"
+        "clouds": "Cloudy skies are seen.",
+        "rain": "Light rain is expected.",
+        "drizzle": "Light rain is falling.",
+        "thunderstorm": "Thunderstorms are occurring.",
+        "snow": "It is looking a lot like christmas",
     }
 
     if condition in weather_data:
         print(weather_data[condition])
     else:
         print(f"No data available for condition: {condition}")
-
 
 if __name__ == '__main__':
     main()
