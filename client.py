@@ -2,6 +2,7 @@ import os
 import random
 import socket
 import pickle
+import time
 
 import pygame
 import pygame.font
@@ -280,11 +281,18 @@ class Game():
         self.board = (1000, 1000)
         self.client = client
         self.running = True
-        self.is_foggy = False
         self.radio = radio
         self.leaderboard_font = pygame.font.Font(resource_path('./fonts/arial_bold.ttf'), 10)
         self.last_direction = (0, 0)
         self.drops = []
+        self.windgusts = []
+        self.konami = False
+        self.konami_code = [pygame.K_UP, pygame.K_UP, pygame.K_DOWN, pygame.K_DOWN,
+                            pygame.K_LEFT, pygame.K_RIGHT, pygame.K_LEFT, pygame.K_RIGHT,
+                            pygame.K_b, pygame.K_LEFT]
+        self.input_sequence = []  # List to track the input sequence
+        self.last_input_time = 0  # Time of the last valid input
+        self.cooldown_duration = 0.2  # Cooldown duration in seconds
         self.city_name = city # May need to re-think if needed or not.
         self.sky_cloud = load_weather_pattern(city)
         # self.city_name = Game.player_city(self) junk code
@@ -296,13 +304,16 @@ class Game():
         weather = weather_data["weather"][0]["main"]
         temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(current_temperature)
         self.temperature_C = round(temp_celsius)
-
         if self.weather_condition == "rain":
-            self.create_drops(100)
+            self.create_drops(80)
         if self.weather_condition == "snow":
-            self.create_drops(100)
+            self.create_drops(20)
         if self.weather_condition == "clouds":
             self.create_weather_condition(6) # Create some weather patterns
+        if self.weather_condition == "drizzle":
+            self.create_drops(30)
+        if self.weather_condition == "wind":
+            self.create_windgusts(30)
 
     # returns the player city name for the score board.
     # returns local weather for player
@@ -488,19 +499,30 @@ class Game():
 
 
         # Apply fog effect
-        # Implemented by Ethan Ung
-        if self.weather_condition == "fog":
+        if self.weather_condition == "mist":
             radius = 255
             clear_radius = 10
             self.apply_fog(radius, clear_radius)
 
         # Apply rain effect
-        # Implemented by Ethan Ung
         if self.weather_condition == "rain":
             self.apply_rain()
 
+        # Apply rain effect
+        if self.weather_condition == "drizzle":
+            self.apply_rain()
+
+        # Apply snow effect
         if self.weather_condition == "snow":
             self.apply_snow()
+
+        # Apply wind effect
+        if self.weather_condition == "wind":
+            self.apply_wind()
+
+        # if Konami code has been entered apply stars
+        if self.konami:
+            self.apply_stars()
 
         # Apply weather effect
         # Adding clouds, sun, lightning etc. by Shafiq Rahman
@@ -509,6 +531,83 @@ class Game():
 
         pygame.display.flip()
 
+    def create_windgusts(self, num_gusts):
+        for _ in range(num_gusts):
+            gust_x = random.randint(0, self.camera[0])
+            gust_y = random.randint(0, self.camera[1])
+            self.windgusts.append([gust_x, gust_y]) # Store gust of wind as [x, y]
+
+    def apply_wind(self):
+        wind_color = (240, 240, 240)  # Color of wind gusts (light grey)
+        gust_width = 20
+        gust_height = 2
+        window_width = self.window.get_width()
+
+        # Determine the slant based on the last user direction
+        horizontal_direction = self.last_direction[0]
+        if horizontal_direction == 1:  # Moving right
+            slant = -3  # Slow down wind speed while snake is running w/ the wind
+        elif horizontal_direction == -1:  # Moving left
+            slant = 3  # Speed up wind speed while snake is running against the wind
+        else:
+            slant = 0  # No horizontal movement
+
+        # Updates the wind gust's position
+        for gust in self.windgusts:
+            gust[0] += 5  # Move the gust of wind right
+            gust[0] += slant
+
+            # If the x position goes beyond the screen width, reset to left
+            if gust[0] > window_width:
+                gust[0] = 0
+
+        # Draws the windgusts
+        for gust in self.windgusts:
+            pygame.draw.rect(self.window, wind_color, (gust[0], gust[1], gust_width, gust_height))
+
+    def initialize_stars(self):
+        """
+        Initializes the stars for apply_stars
+        Creates a list of 100 stars with random x and y coordinates within camera[x, y]
+        Implemented by Ethan Ung
+        :return:
+        """
+        self.drops = [[random.randint(0, self.camera[0]), random.randint(0, self.camera[1])] for _ in range(100)]
+        print(f"Stars initialized: {self.drops}")
+
+    def apply_stars(self):
+        """
+        Apply a star animation around the player to simulate a starry night sky.
+        Activated upon applying the konami code
+        Iterates through each star, moving it downwards
+        If it goes off the bottom of the screen, it resets to the top with a new x-coordinate
+        Loops through each star and draws it with a random size and color
+        Implemented by Ethan Ung
+
+        :return:
+        """
+        # print("Applying stars")
+        window_width = self.window.get_width()
+        window_height = self.window.get_height()
+
+        # Updates the star positions
+        for star in self.drops:
+            star[1] += 1  # Move the star downwards
+
+            # Reset star position if it goes beyond the bottom of the window
+            if star[1] > window_height:
+                star[1] = 0  # Reset above the window
+                star[0] = random.randint(0, window_width)  # Randomize x position
+
+        # Draws the stars
+        for star in self.drops:
+            # Random size for stars
+            star_size = random.randint(2, 5)
+            # Random color for stars
+            star_color = (random.randint(200, 255), random.randint(200, 255), random.randint(200, 255))
+            # Draw the star
+            pygame.draw.rect(self.window, star_color, (star[0], star[1], star_size, star_size))
+
     def apply_snow(self):
         """
         Apply a snow animation around the player to simulate snowy conditions
@@ -516,8 +615,8 @@ class Game():
         :return:
         """
         snow_color = (255, 255, 255)  # Color of snowdrops (white)
-        drop_width = 2
-        drop_height = 2
+        drop_width = 5
+        drop_height = 5
         window_width = self.window.get_width()
         window_height = self.window.get_height()
 
@@ -527,9 +626,9 @@ class Game():
         # Determine the slant based on the last user direction
         horizontal_direction = self.last_direction[0]
         if horizontal_direction == 1:  # Moving right
-            slant = 5  # Slant right
-        elif horizontal_direction == -1:  # Moving left
             slant = -5  # Slant left
+        elif horizontal_direction == -1:  # Moving left
+            slant = 5  # Slant right
         else:
             slant = 0  # No horizontal movement
 
@@ -586,9 +685,9 @@ class Game():
         # Determine the slant based on the last user direction
         horizontal_direction = self.last_direction[0]
         if horizontal_direction == 1:  # Moving right
-            slant = 5  # Slant right
-        elif horizontal_direction == -1:  # Moving left
             slant = -5  # Slant left
+        elif horizontal_direction == -1:  # Moving left
+            slant = +5  # Slant right
         else:
             slant = 0  # No horizontal movement
 
@@ -728,20 +827,60 @@ class Game():
         direction = None
         keys = pygame.key.get_pressed()
         new_direction = (0, 0)
-        if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             new_direction = (-1, 0)
-        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
+            self.check_konami_code(pygame.K_LEFT)
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             new_direction = (1, 0)
-        if (keys[pygame.K_UP] or keys[pygame.K_w]):
+            self.check_konami_code(pygame.K_RIGHT)
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
             new_direction = (0, -1)
-        if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
+            self.check_konami_code(pygame.K_UP)
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             new_direction = (0, 1)
+            self.check_konami_code(pygame.K_DOWN)
+        if keys[pygame.K_b]:
+            self.check_konami_code(pygame.K_b)
 
         # Only update last_direction if there's new input
         if new_direction != (0, 0):
             self.last_direction = new_direction
 
         return self.last_direction
+    def check_konami_code(self, key):
+        """
+        Check if the user enters the keys that match the current position in the Konami code
+        Gets current time for managing input timing (prevents multiple keys being pressed even though user is tapping)
+        Implemented by Ethan Ung
+
+        :param key:
+        :return:
+        """
+        current_time = time.time()
+
+        # Check if enough time has passed since the last input
+        if current_time - self.last_input_time < self.cooldown_duration:
+            return  # Ignore input if within the cooldown period
+
+        print(f"Calling Check_Konami: {key} ({pygame.key.name(key)})")
+
+        # Add the pressed key to the input sequence
+        self.input_sequence.append(key)
+
+        # Keep only the last n keys where n is the length of the konami code
+        if len(self.input_sequence) > len(self.konami_code):
+            self.input_sequence.pop(0)
+
+        print(f"Current input sequence: {self.input_sequence}")
+
+        # Check if the current input sequence matches the Konami code
+        if self.input_sequence == self.konami_code:
+            print("Konami code entered!")
+            self.konami = True
+            self.input_sequence.clear()  # Clear the sequence after successful entry
+            self.initialize_stars()  # Initialize stars upon entering the code
+
+        self.last_input_time = current_time  # Update the last input time
 
     def game_loop(self):
         """
@@ -981,7 +1120,7 @@ def main():
     #print(f"description in {CITY}: {description}.")
 
     print(f"-----------------------------")
-    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Fog): ").strip().lower()
+    weather_condition = input("Enter desired weather condition (Clear, Clouds, Rain, Wind, Mist, Snow): ").strip().lower()
 
     # Process the condition
     check_weather(weather_condition)
@@ -1010,13 +1149,14 @@ def check_weather(condition):
     :return:
     """
     weather_data = {
-        "fog": "Visibility is low due to fog.",
+        "mist": "Visibility is low due to fog.",
         "clear": "No significant weather conditions.",
         "clouds": "Cloudy skies are seen.",
-        "rain": "Light rain is expected.",
+        "rain": "Rain is expected.",
         "drizzle": "Light rain is falling.",
         "thunderstorm": "Thunderstorms are occurring.",
         "snow": "It is looking a lot like christmas",
+        "wind": "It is windy in here!"
     }
 
     if condition in weather_data:
