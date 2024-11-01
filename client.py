@@ -996,8 +996,9 @@ def check_weather(condition):
         "clouds": "Cloudy skies are seen.",
         "rain": "Rain is falling.",
         "drizzle": "Light rain is falling.",
-        "thunderstorm": "Thunderstorms are occurring.",
+        "thunderstorm": "Thunderstorms are occurring. (Not implemented)",
         "snow": "It is looking a lot like christmas",
+        "wind": "It is windy out here!"
     }
 
     if condition in weather_data:
