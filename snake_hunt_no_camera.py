@@ -1,3 +1,4 @@
+
 import pygame
 from random import randint
 from math import floor as flr
@@ -6,8 +7,8 @@ from tkinter import *
 from tkinter import ttk
 root = Tk()
 
-BEYOND_BOARD = (1500, 1500)
-BOARD = (750,750)
+BEYOND_BOARD = (2000, 2000)
+BOARD = (1000,1000)
 CELL = 10
 SPEED = CELL
 
@@ -19,8 +20,7 @@ ROWS = int(BOARD[1]/CELL)
 
 # Vars added by Ryan, Shafiq, or Ethan.
 snakeFoodQuantity = 500
-# AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
-AISnakes = ("Abaco Island boa","Boa constrictor")
+AISnakes = ("Abaco Island boa","Boa constrictor","Amazon tree boa","Cuban boa","Dumeril's boa","Dwarf boa","Emerald tree boa","Hogg Island boa","Jamaican boa","Madagascar ground boa")
 Camera_Dimensions = BOARD  # Updated so that the screen is the same as the board.
 Camera_Center_Beyond_Board = (int(BEYOND_BOARD[0]/2),int(BEYOND_BOARD[1]/2))
 
@@ -33,7 +33,7 @@ class AIPlayer():
         self.snake = snake
 
     def update_direction(self):
-        # Randomly changing direction every few moves
+        # Randomly change direction every few moves
         if random.choice(['up', 'down', 'left', 'right']) == 'up' and self.snake.head.ydir != 1:
             self.snake.change_direction_manual(0, -1)  # Up
         elif random.choice(['up', 'down', 'left', 'right']) == 'down' and self.snake.head.ydir != -1:
@@ -115,7 +115,8 @@ class Snake():
     def __init__(self, position, length, xdir, ydir, field_dimensions, world_dimensions):
         #(west,north,east,south) points
         self.bounds = {"west":world_dimensions[0]/4, "north":world_dimensions[1]/4, "east":3*world_dimensions[0]/4+field_dimensions[0], "south":3*world_dimensions[1]/4+field_dimensions[1]}
-        self.color = (0, 255, 0)
+        # self.color = (0, 255, 0)
+        self.color = (0, 0, 139)
         self.body = []
         self.turns = {}
         self.position = position
@@ -301,13 +302,14 @@ class Camera():
     def __init__(self, player, dimensions):
         self.dimensions = dimensions
         # Center the camera over the board
-        self.position = (BEYOND_BOARD[0] // 2, BEYOND_BOARD[1] // 2)
+        # cg self.position = (BEYOND_BOARD[0] // 2, BEYOND_BOARD[1] // 2)
 
     def render(self, window, world):
         # Render the board centered in the window
         # window.blit(world, (5, 5),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
-        window.blit(world, (0, 0),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
-
+        # cg        window.blit(world, (0, 0),(self.position[0] - self.dimensions[0] // 2, self.position[1] - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
+        head_x, head_y = self.target.head.position
+        window.blit(world,(0, 0),(head_x - self.dimensions[0] // 2, head_y - self.dimensions[1] // 2, self.dimensions[0], self.dimensions[1]))
 
 # Generates multiple pellets in random locations such that they do not
 # overlap
@@ -424,9 +426,13 @@ class Game():
 
     def render(self):
         # Following modified and changed by Shafiq Rahman
-        # Changed the colors to some random green rather than the putrid pink.
-        self.world.fill((0,30,0))
-        pygame.draw.rect(self.world, (0,50,0),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+
+        # change the background of the game to blue and light blue for beyond.
+        # self.world.fill((20,30,20))
+        # pygame.draw.rect(self.world, (130,100,130),(BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+
+        self.world.fill((50,50,50))  # Other colors
+        pygame.draw.rect(self.world, (50, 50, 50), (BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))  # Other colors
 
         self.players[0].snake.render(self.world)
         # self.players[1].snake.render(self.world)

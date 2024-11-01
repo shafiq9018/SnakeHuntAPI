@@ -6,8 +6,8 @@ from tkinter import *
 from tkinter import ttk
 root = Tk()
 
-BEYOND_BOARD = (1500, 1500)
-BOARD = (750,750)
+BEYOND_BOARD = (2000, 2000)
+BOARD = (1000,1000)
 CELL = 10
 SPEED = CELL
 
@@ -23,6 +23,26 @@ snakeFoodQuantity = 500
 AISnakes = ("Abaco Island boa","Boa constrictor")
 Camera_Dimensions = BOARD  # Updated so that the screen is the same as the board.
 Camera_Center_Beyond_Board = (int(BEYOND_BOARD[0]/2),int(BEYOND_BOARD[1]/2))
+
+
+class SnakeRenderer:
+    def __init__(self, field_dimensions, world_dimensions):
+        self.field_dimensions = field_dimensions
+        self.world_dimensions = world_dimensions
+        self.snakes = []
+
+    def add_snake(self, name, initial_pos, is_ai=False):
+        snake = Snake(initial_pos, 1, 1, 0, self.field_dimensions, self.world_dimensions)
+        if is_ai:
+            ai_player = AIPlayer(name, snake)
+            self.snakes.append(ai_player)
+        else:
+            human_player = HumanPlayer(name, snake)
+            self.snakes.append(human_player)
+
+    def render(self, surface):
+        for player in self.snakes:
+            player.snake.render(surface)
 
 # AI player added by Shafiq Rahman
 import random
@@ -374,7 +394,70 @@ class RandomPellets():
 class Player_snake:
     pass
 
+class Game():
+    def __init__(self):
+        self.running = False
+        pygame.init()
+        self.field_dimensions = BOARD
+        self.world_dimensions = BEYOND_BOARD
+        self.snake_renderer = SnakeRenderer(self.field_dimensions, self.world_dimensions)
 
+        # Create snakes and add them to the renderer
+        initial_pos = (250, 250)
+        self.snake_renderer.add_snake('Anonymous', initial_pos, is_ai=False)
+
+        for name in AISnakes:
+            random_pos = (randint(0, COLS) * CELL, randint(0, ROWS) * CELL)
+            self.snake_renderer.add_snake(name, random_pos, is_ai=True)
+
+        # Camera setup for AI players
+        self.camera_dimensions = Camera_Dimensions
+        self.win = pygame.display.set_mode(self.camera_dimensions)
+        self.world = pygame.Surface(self.world_dimensions)
+
+        # Initialize the camera only for the human player's snake
+        self.camera = Camera(self.snake_renderer.snakes[0].snake, self.camera_dimensions)
+        # self.title_rect.center = (self.camera_dimensions[0] // 2, self.camera_dimensions[1] // 2)
+
+        self.pellets = RandomPellets(snakeFoodQuantity, self.world)
+        self.clock = pygame.time.Clock()
+        self.running = False
+
+    def render(self):
+        self.world.fill((0,30,0))
+        pygame.draw.rect(self.world, (0,50,0), (BEYOND_BOARD[0]/4, BEYOND_BOARD[1]/4, BOARD[0], BOARD[1]))
+
+        self.snake_renderer.render(self.world)
+        self.pellets.render(self.world)
+        self.camera.render(self.win, self.world)
+        self.show_leaderboard()
+
+        pygame.display.flip()
+
+    def game_loop(self):
+        self.running = True
+#        self.pause()
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+            pos = self.pellets.getPositions()
+            for player in self.players:
+                if isinstance(player, AIPlayer):
+                    player.update_direction()
+                snake = player.snake
+                if [snake.head.position[0], snake.head.position[1]] in pos:
+                    pellet = self.pellets.pellets[pos.index([snake.head.position[0], snake.head.position[1]])]
+                    self.pellets.resetPellet(pellet)
+                    snake.grow(1)
+                # snake.check_body_collision()  <----------please undo remarked before turning in----------------- Testing
+                snake.change_direction()
+                snake.move()
+            self.render()
+            self.clock.tick(15)
+        pygame.quit()
+
+'''
 class Game():
     def __init__(self):
         pygame.init()
@@ -479,33 +562,8 @@ class Game():
             self.render()
             self.clock.tick(15)
         pygame.quit()
+'''
 
-    '''
-        self.running = True
-
-        self.pause()
-        while(self.running):
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-
-            pos = self.pellets.getPositions()
-            snake = self.players[0].snake
-            if([snake.head.position[0], snake.head.position[1]] in pos):
-                pellet = self.pellets.pellets[pos.index([snake.head.position[0],snake.head.position[1]])]
-                # delete this pellet and generate a new random pellet
-                self.pellets.resetPellet(pellet)
-                snake.grow(1)
-
-            snake.check_body_collision()
-            snake.change_direction()
-            snake.move()
-
-            self.render()
-            self.clock.tick(15)
-            
-        pygame.quit()
-    '''
 def main():
     game = Game()
     game.game_loop()
