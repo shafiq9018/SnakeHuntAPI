@@ -657,7 +657,10 @@ class Game():
     def create_drops(self, num_drops):
         """
         Creates the raindrops for the rain animation
+        Iterates num_drops times to create each drop
+        Randomly assigns x and y positions within camera's current view (prevents animations outside of camera)
         Implemented by Ethan Ung
+
         :param num_drops:
         :return:
         """
@@ -716,6 +719,8 @@ class Game():
     def apply_fog(self, radius, clear_radius):
         """
         Apply a fog around the player to simulate foggy conditions
+        Creates fog_texture if not exist
+
         Implemented by Ethan Ung
 
         :param radius:
@@ -736,7 +741,11 @@ class Game():
 
     def create_fog_texture(self, radius, clear_radius):
         """
-        Creates a fog texture for the apply_fog function
+        Creates a fog texture for the apply_fog function (rectangle)
+        Iterates over each pixel in the fog texture to calculate its distance from the center
+        Determines transparency (alpha) based on distance
+        Fully transparent in the middle (clear_radius) and gradually becomes opaque towards the edge of the screen
+        0 (fully transparent) and 255 (fully opaque)
         Implemented by Ethan Ung
 
         :param radius:
@@ -745,12 +754,18 @@ class Game():
         """
         fog_texture = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
 
+        # Euclidean distance formula: Square root of (x - center_x)^2 + (y - center_y)^2
+        # In our case center_x and center_y will represent radius as the center of the fog is at (radius, radius)
+        # Determines how far the current pixel is from the center of the fog effect
+        # If a pixel is at the center of the fog, the distance will be 0. As you move outward, the distance increases
         for y in range(fog_texture.get_height()):
             for x in range(fog_texture.get_width()):
                 distance = ((x - radius) ** 2 + (y - radius) ** 2) ** 0.5
 
                 if distance < clear_radius:
                     alpha = 0  # Fully transparent in the center of the camera
+                # If distance is between clear_radius and radius,
+                # the calculation determines the alpha value, which controls the pixel's transparency
                 elif distance < radius:
                     # Calculate alpha for the fog within the radius
                     alpha = min(255, int(255 * ((distance - clear_radius) / (radius - clear_radius))))
